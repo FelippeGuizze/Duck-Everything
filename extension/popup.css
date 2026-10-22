@@ -1,6 +1,5 @@
 /* ═══════════════════════════════════════════════════════
-   Duck Everything — Popup Stylesheet
-   Design: dark, terminal-inspired separators, uBlock accent
+   Duck Everything — Popup Stylesheet v2.1
    ═══════════════════════════════════════════════════════ */
 
 /* ── CSS Custom Properties ── */
@@ -17,14 +16,14 @@
   --text-primary: #e2e4ea;
   --text-secondary: #9499a8;
   --text-muted: #6c7186;
-  --dot-on: #50d07d;
-  --dot-off: #585b70;
   --switch-bg: #454858;
   --switch-bg-on: var(--accent);
   --switch-knob: #cdd0da;
   --switch-knob-on: #fff;
   --radius: 8px;
   --radius-sm: 6px;
+  /* minimum & default popup height */
+  --popup-min-h: 420px;
 }
 
 /* ── Reset ── */
@@ -32,13 +31,18 @@
 
 html {
   width: 380px;
+  /* allow vertical resize */
+  min-height: var(--popup-min-h);
   height: 580px;
+  max-height: 900px;
   overflow: hidden;
+  resize: vertical;       /* enable native vertical resize */
 }
 
 body {
   width: 380px;
-  height: 580px;
+  min-height: var(--popup-min-h);
+  height: 100%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -51,7 +55,9 @@ body {
 .view {
   display: none;
   flex-direction: column;
+  /* fill whatever height the resized html has */
   height: 100%;
+  min-height: 0;
   overflow: hidden;
 }
 .view.active {
@@ -73,11 +79,6 @@ header {
   align-items: center;
   gap: 10px;
 }
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
 .header-icon {
   width: 28px;
   height: 28px;
@@ -89,17 +90,8 @@ h1 {
   letter-spacing: -0.2px;
   color: var(--text-primary);
 }
-.version {
-  font-size: 10px;
-  color: var(--text-muted);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  padding: 1px 6px;
-  border-radius: 10px;
-  font-weight: 500;
-}
 
-/* ── Icon buttons (gear, back) ── */
+/* ── Icon button — back arrow ── */
 .icon-btn {
   display: flex;
   align-items: center;
@@ -118,21 +110,26 @@ h1 {
   color: var(--accent-hover);
   border-color: var(--accent-dim);
 }
-.icon-btn-sm {
+
+/* ── Gear button (footer) — more prominent ── */
+.icon-btn-gear {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   border-radius: var(--radius-sm);
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: color 0.15s;
+  transition: all 0.15s ease;
 }
-.icon-btn-sm:hover {
-  color: var(--accent-hover);
+.icon-btn-gear:hover {
+  background: var(--bg-hover);
+  color: var(--accent);
+  border-color: var(--accent-dim);
+  box-shadow: 0 0 0 1px var(--accent-dim);
 }
 
 /* ── Terminal-style separator lines ── */
@@ -140,7 +137,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 2px 16px;
+  padding: 3px 16px;
   flex-shrink: 0;
 }
 .separator::before,
@@ -151,7 +148,7 @@ h1 {
   background: var(--border);
 }
 .separator.thin {
-  padding: 4px 16px;
+  padding: 0 16px;
 }
 .separator.thin::before,
 .separator.thin::after {
@@ -167,54 +164,27 @@ h1 {
   font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
 }
 
-/* ── Content area ── */
-#view-main {
-  padding-bottom: 0;
-}
-#view-main > .separator,
-#view-main > .master,
-#view-main > .capture-actions,
-#view-main > #status,
-#view-main > .buttons,
-#view-main > .bulk-actions {
-  margin: 0 16px;
-}
-
 /* ── Master toggle ── */
 .master {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
-  margin: 6px 16px !important;
+  margin: 5px 16px;
   background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  /* slightly thicker accent border */
+  border: 1.5px solid var(--accent-dim);
   border-radius: var(--radius);
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
 }
 .master:hover {
-  border-color: var(--accent-dim);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-dim);
 }
 
-/* ── Toggle dot (like ViolentMonkey / AdGuard) ── */
-.toggle-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--dot-off);
-  flex-shrink: 0;
-  transition: background 0.2s;
-}
-.toggle-dot.on {
-  background: var(--dot-on);
-}
-#master-dot {
-  width: 10px;
-  height: 10px;
-}
-
-/* ── Options list ── */
+/* ── Options list — fills available space ── */
 .options-list {
   flex: 1;
   min-height: 0;
@@ -297,11 +267,18 @@ input:focus-visible + .switch {
   outline-offset: 2px;
 }
 
+/* ── Bottom area (status + buttons + bulk + footer) — never scrolls ── */
+.bottom-area {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 /* ── Capture buttons ── */
 .capture-actions {
   display: flex;
   gap: 8px;
-  padding: 6px 16px;
+  padding: 5px 16px;
   flex-shrink: 0;
 }
 .capture {
@@ -337,13 +314,13 @@ input:focus-visible + .switch {
 /* ── Status ── */
 #status {
   font-size: 11px;
-  min-height: 28px;
-  max-height: 28px;
+  height: 26px;
   color: var(--text-secondary);
-  padding: 4px 16px;
+  padding: 4px 22px;
   line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
   flex-shrink: 0;
 }
 
@@ -390,17 +367,18 @@ button:disabled {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 2px 16px 0;
+  padding: 1px 16px 2px;
   flex-shrink: 0;
 }
+/* more visible subtle buttons */
 .subtle {
   background: transparent;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   border: none;
-  padding: 6px 0;
-  font-size: 10px;
+  padding: 5px 0;
+  font-size: 11.5px;
+  font-weight: 600;
   cursor: pointer;
-  font-weight: 500;
   transition: color 0.15s;
 }
 .subtle:hover {
@@ -410,18 +388,22 @@ button:disabled {
 /* ── Footer ── */
 footer {
   flex-shrink: 0;
-  padding: 0 0 6px;
+  padding: 0 0 4px;
 }
 .footer-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 16px;
+  padding: 4px 14px 2px;
 }
-.footer-text {
-  font-size: 10px;
-  color: var(--text-muted);
-  font-family: 'Cascadia Code', 'Fira Code', monospace;
+.footer-url {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 290px;
 }
 .footer-icons {
   display: flex;
@@ -436,10 +418,10 @@ footer {
 }
 
 .settings-section {
-  padding: 8px 16px;
+  padding: 4px 16px 8px;
 }
 .setting-item {
-  padding: 8px 0;
+  padding: 6px 0 2px;
 }
 .setting-info b {
   font-size: 13px;
@@ -455,13 +437,13 @@ footer {
 
 /* ── Color controls ── */
 .color-controls {
-  margin-top: 12px;
+  margin-top: 10px;
 }
 .color-system-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 0;
+  padding: 4px 0;
   cursor: pointer;
   font-size: 12px;
   color: var(--text-primary);
@@ -477,7 +459,7 @@ footer {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 0;
+  padding: 8px 0;
   transition: opacity 0.2s;
 }
 .color-picker-row.disabled {
@@ -493,17 +475,22 @@ footer {
   flex-shrink: 0;
   cursor: pointer;
   transition: border-color 0.15s;
+  position: relative;
 }
 .color-preview:hover {
   border-color: var(--accent);
 }
+
+/* Color input is placed inside the preview div via JS, hidden but functional */
 input[type="color"] {
-  width: 0;
-  height: 0;
-  padding: 0;
-  border: none;
-  opacity: 0;
   position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  padding: 0;
 }
 .color-hex {
   font-family: 'Cascadia Code', 'Fira Code', monospace;
@@ -515,7 +502,7 @@ input[type="color"] {
 .color-presets {
   display: flex;
   gap: 8px;
-  padding: 6px 0;
+  padding: 4px 0 6px;
   flex-wrap: wrap;
   transition: opacity 0.2s;
 }

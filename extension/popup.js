@@ -1,7 +1,7 @@
 'use strict';
 
 /* ═══════════════════════════════════════════════════════
-   Duck Everything — Popup Logic
+   Duck Everything — Popup Logic v2.1
    ═══════════════════════════════════════════════════════ */
 
 const keys = Object.keys(globalThis.DUCK_DEFAULTS);
@@ -13,33 +13,25 @@ const errorText = e =>
     .replace(/blob:[^\s]+/gi, '[arquivo temporário]')
     .slice(0, 240);
 
-const buttons = [...document.querySelectorAll('button:not(.preset):not(.icon-btn):not(.icon-btn-sm)')];
+/* Exclude preset, icon and gear buttons from busy lock */
+const buttons = [
+  ...document.querySelectorAll(
+    'button:not(.preset):not(.icon-btn):not(.icon-btn-gear)'
+  )
+];
 const busy = value => buttons.forEach(b => b.disabled = value);
 
-/* ── Version tag ── */
-const manifest = browser.runtime.getManifest();
-const versionTag = document.getElementById('version-tag');
-const infoVersion = document.getElementById('info-version');
-if (versionTag) versionTag.textContent = 'v' + manifest.version;
-if (infoVersion) infoVersion.textContent = manifest.version;
-
-/* ── Toggle dots sync ── */
-function syncDots() {
-  // Master dot
-  const masterDot = document.getElementById('master-dot');
-  const enabledCb = document.getElementById('enabled');
-  if (masterDot && enabledCb) {
-    masterDot.classList.toggle('on', enabledCb.checked);
+/* ── Show active tab URL in footer ── */
+browser.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
+  const el = document.getElementById('footer-url');
+  if (!el) return;
+  try {
+    const url = new URL(tab?.url || '');
+    el.textContent = url.hostname || tab?.url || '—';
+  } catch {
+    el.textContent = tab?.url || '—';
   }
-  // Option dots
-  document.querySelectorAll('.options-list .row').forEach(row => {
-    const cb = row.querySelector('input[type="checkbox"]');
-    const dot = row.querySelector('.toggle-dot');
-    if (cb && dot) {
-      dot.classList.toggle('on', cb.checked);
-    }
-  });
-}
+}).catch(() => {});
 
 /* ── Show settings ── */
 function show(s) {
@@ -47,19 +39,15 @@ function show(s) {
     const el = document.getElementById(k);
     if (el) el.checked = s[k];
   });
-  syncDots();
 }
-
-/* ── Listen for checkbox changes to sync dots ── */
-document.querySelectorAll('input[type="checkbox"][role="switch"]').forEach(cb => {
-  cb.addEventListener('change', syncDots);
-});
 
 /* ── Save ── */
 async function save(reload) {
   busy(true);
   try {
-    const settings = Object.fromEntries(keys.map(k => [k, document.getElementById(k).checked]));
+    const settings = Object.fromEntries(
+      keys.map(k => [k, document.getElementById(k).checked])
+    );
     await browser.runtime.sendMessage({ type: 'save', settings });
     status.textContent = 'Salvo. Recarregue as abas abertas para aplicar.';
     if (reload) {
@@ -129,161 +117,160 @@ function switchView(target) {
   viewSettings.classList.toggle('active', target === 'settings');
 }
 
-document.getElementById('btn-settings').onclick = () => switchView('settings');
 document.getElementById('btn-settings-footer').onclick = () => switchView('settings');
 document.getElementById('btn-back').onclick = () => switchView('main');
 
 /* ═══════════════════════════════════════════════════════
    ACCENT COLOR SYSTEM
-   Detects OS accent color and allows custom override.
+   - Detects OS accent color via CSS system keywords
+   - Color picker is embedded inside the preview swatch,
+     so the popup does NOT close when the native picker opens
+   - Remembers last custom color even when "use system" is on
    ═══════════════════════════════════════════════════════ */
 
-const accentColorInput = document.getElementById('accent-color');
-const colorPreview = document.getElementById('color-preview');
-const colorHex = document.getElementById('color-hex');
-const useSystemColor = document.getElementById('use-system-color');
-const customColorRow = document.getElementById('custom-color-row');
+const colorHex           = document.getElementById('color-hex');
+const useSystemColor     = document.getElementById('use-system-color');
+const customColorRow     = document.getElementById('custom-color-row');
 const colorPresetsContainer = document.getElementById('color-presets');
-const presetButtons = document.querySelectorAll('.preset');
+const presetButtons      = document.querySelectorAll('.preset');
 
 // Default fallback accent
 const FALLBACK_ACCENT = '#7c6ee7';
 
+/* ── Move the <input type="color"> inside the preview div ──
+   This way clicking the swatch opens the picker without
+   the popup losing focus / closing.                        */
+const colorPreview  = document.getElementById('color-preview');
+const accentColorInput = document.getElementById('accent-color');
+colorPreview.appendChild(accentColorInput);   // move into the swatch
+
 /* ── Detect system accent color ── */
 function getSystemAccentColor() {
-  // Try to read the CSS system accent color
-  const test = document.createElement('div');
-  test.style.color = 'AccentColor';
-  document.body.appendChild(test);
-  const computed = getComputedStyle(test).color;
-  document.body.removeChild(test);
-
-  // If the browser supports AccentColor, computed will be an rgb() value
-  if (computed && computed !== '' && !computed.includes('AccentColor')) {
-    return rgbToHex(computed);
-  }
-
-  // Fallback: try the CSS highlight color
-  const test2 = document.createElement('div');
-  test2.style.color = 'Highlight';
-  document.body.appendChild(test2);
-  const computed2 = getComputedStyle(test2).color;
-  document.body.removeChild(test2);
-
-  if (computed2 && computed2 !== '' && !computed2.includes('Highlight')) {
-    return rgbToHex(computed2);
-  }
-
-  return FALLBACK_ACCENT;
+  const probe = (keyword) => {
+    const el = document.createElement('div');
+    el.style.cssText = `color:${keyword};position:absolute;visibility:hidden`;
+    document.body.appendChild(el);
+    const val = getComputedStyle(el).color;
+    document.body.removeChild(el);
+    return (!val || val.includes(keyword)) ? null : rgbToHex(val);
+  };
+  return probe('AccentColor') || probe('Highlight') || FALLBACK_ACCENT;
 }
 
 function rgbToHex(rgb) {
-  const match = rgb.match(/(\d+),\s*(\d+),\s*(\d+)/);
-  if (!match) return FALLBACK_ACCENT;
-  const r = parseInt(match[1]).toString(16).padStart(2, '0');
-  const g = parseInt(match[2]).toString(16).padStart(2, '0');
-  const b = parseInt(match[3]).toString(16).padStart(2, '0');
-  return '#' + r + g + b;
+  const m = rgb.match(/(\d+),\s*(\d+),\s*(\d+)/);
+  if (!m) return FALLBACK_ACCENT;
+  return '#' +
+    (+m[1]).toString(16).padStart(2, '0') +
+    (+m[2]).toString(16).padStart(2, '0') +
+    (+m[3]).toString(16).padStart(2, '0');
 }
 
-/* ── Apply accent color to CSS ── */
+/* ── Apply accent color to all CSS vars ── */
 function applyAccent(hex) {
+  if (!/^#[0-9a-f]{6}$/i.test(hex)) return;
   const root = document.documentElement;
   root.style.setProperty('--accent', hex);
   root.style.setProperty('--accent-dim', hex + '33');
 
-  // Compute a lighter variant for hover
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   const lighter = '#' +
-    Math.min(255, r + 20).toString(16).padStart(2, '0') +
-    Math.min(255, g + 20).toString(16).padStart(2, '0') +
-    Math.min(255, b + 20).toString(16).padStart(2, '0');
+    Math.min(255, r + 22).toString(16).padStart(2, '0') +
+    Math.min(255, g + 22).toString(16).padStart(2, '0') +
+    Math.min(255, b + 22).toString(16).padStart(2, '0');
   root.style.setProperty('--accent-hover', lighter);
-
-  // Update switch on color
   root.style.setProperty('--switch-bg-on', hex);
 
-  // Update previews
-  if (colorPreview) colorPreview.style.background = hex;
+  // Update swatch and hex label
+  colorPreview.style.background = hex;
   if (colorHex) colorHex.textContent = hex;
-  if (accentColorInput) accentColorInput.value = hex;
+  accentColorInput.value = hex;
 
-  // Update active preset
-  presetButtons.forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.color === hex);
-  });
+  // Highlight matching preset
+  presetButtons.forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.color.toLowerCase() === hex.toLowerCase())
+  );
 }
 
-/* ── Save/load accent preferences ── */
+/* ── Persist / load accent prefs ──
+   Structure: { useSystem: bool, customColor: '#rrggbb' }
+   customColor is ALWAYS stored, even when useSystem=true,
+   so switching back recovers the last chosen color.       */
 async function saveAccentPrefs(useSystem, customColor) {
-  await browser.storage.local.set({
-    accentPrefs: { useSystem, customColor }
-  });
+  await browser.storage.local.set({ accentPrefs: { useSystem, customColor } });
 }
 
 async function loadAccentPrefs() {
-  const result = await browser.storage.local.get('accentPrefs');
-  return result.accentPrefs || { useSystem: true, customColor: FALLBACK_ACCENT };
+  const res = await browser.storage.local.get('accentPrefs');
+  return res.accentPrefs || { useSystem: true, customColor: FALLBACK_ACCENT };
 }
 
-/* ── Initialize accent color ── */
+/* ── Set picker disabled state ── */
+function setPickerEnabled(enabled) {
+  if (enabled) {
+    customColorRow.classList.remove('disabled');
+    colorPresetsContainer.classList.remove('disabled');
+  } else {
+    customColorRow.classList.add('disabled');
+    colorPresetsContainer.classList.add('disabled');
+  }
+}
+
+/* ── Init ── */
 async function initAccentColor() {
   const prefs = await loadAccentPrefs();
-  const systemColor = getSystemAccentColor();
-
   useSystemColor.checked = prefs.useSystem;
 
   if (prefs.useSystem) {
-    applyAccent(systemColor);
-    customColorRow.classList.add('disabled');
-    colorPresetsContainer.classList.add('disabled');
+    applyAccent(getSystemAccentColor());
+    setPickerEnabled(false);
   } else {
     applyAccent(prefs.customColor || FALLBACK_ACCENT);
-    customColorRow.classList.remove('disabled');
-    colorPresetsContainer.classList.remove('disabled');
+    setPickerEnabled(true);
   }
 }
 
-/* ── Event: toggle system color ── */
+/* ── Toggle system color ── */
 useSystemColor.addEventListener('change', async () => {
   const useSystem = useSystemColor.checked;
+  // Always read the saved customColor so we don't lose it
+  const prefs = await loadAccentPrefs();
+  const custom = prefs.customColor || FALLBACK_ACCENT;
+
   if (useSystem) {
-    const systemColor = getSystemAccentColor();
-    applyAccent(systemColor);
-    customColorRow.classList.add('disabled');
-    colorPresetsContainer.classList.add('disabled');
-    await saveAccentPrefs(true, accentColorInput.value);
+    applyAccent(getSystemAccentColor());
+    setPickerEnabled(false);
+    // Save useSystem=true, but keep customColor intact
+    await saveAccentPrefs(true, custom);
   } else {
-    customColorRow.classList.remove('disabled');
-    colorPresetsContainer.classList.remove('disabled');
-    const prefs = await loadAccentPrefs();
-    applyAccent(prefs.customColor || FALLBACK_ACCENT);
-    await saveAccentPrefs(false, prefs.customColor || FALLBACK_ACCENT);
+    applyAccent(custom);
+    setPickerEnabled(true);
+    await saveAccentPrefs(false, custom);
   }
 });
 
-/* ── Event: color picker ── */
-colorPreview.addEventListener('click', () => {
-  if (!useSystemColor.checked) accentColorInput.click();
-});
-
+/* ── Color picker input (native, inside the swatch div) ── */
 accentColorInput.addEventListener('input', async () => {
   const hex = accentColorInput.value;
   applyAccent(hex);
+  // Save with useSystem=false automatically
+  useSystemColor.checked = false;
+  setPickerEnabled(true);
   await saveAccentPrefs(false, hex);
 });
 
-/* ── Event: preset buttons ── */
+/* ── Preset buttons ── */
 presetButtons.forEach(btn => {
   btn.addEventListener('click', async () => {
-    if (useSystemColor.checked) return;
     const hex = btn.dataset.color;
     applyAccent(hex);
+    useSystemColor.checked = false;
+    setPickerEnabled(true);
     await saveAccentPrefs(false, hex);
   });
 });
 
-/* ── Init ── */
+/* ── Kick off ── */
 initAccentColor();
