@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "Graphite Control",
+  "version": "1.1.2",
+  "description": "Controle global de cópia, seleção, fullscreen e foco com opções independentes.",
+  "permissions": [
+    "storage",
+    "scripting",
+    "activeTab",
+    "downloads"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": [
+      "defaults.js",
+      "capture.js",
+      "background.js"
+    ]
+  },
+  "action": {
+    "default_title": "Graphite Control",
+    "default_popup": "popup.html",
+    "default_icon": "icon.svg"
+  },
+  "icons": {
+    "48": "icon.svg",
+    "96": "icon.svg"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "graphite-control@local.invalid",
+      "strict_min_version": "128.0"
+    }
+  }
+}
