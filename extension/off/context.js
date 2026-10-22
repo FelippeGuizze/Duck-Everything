@@ -1,1 +1,1 @@
-globalThis.__graphite_boot_config__.context = false;
+globalThis.__duck_boot_config__.context = false;

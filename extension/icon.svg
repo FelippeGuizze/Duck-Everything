@@ -1,1 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><rect x="4" y="4" width="88" height="88" rx="24" fill="#34363b"/><path d="M65 32a24 24 0 1 0 4 30V49H48" fill="none" stroke="#dddfe3" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+  <rect x="4" y="4" width="88" height="88" rx="24" fill="#1e1f24"/>
+  <g transform="translate(48,48) scale(0.38)">
+    <!-- Duck body -->
+    <ellipse cx="0" cy="20" rx="42" ry="30" fill="#f5c518"/>
+    <!-- Duck head -->
+    <circle cx="-20" cy="-18" r="22" fill="#f5c518"/>
+    <!-- Duck eye -->
+    <circle cx="-26" cy="-24" r="4" fill="#1e1f24"/>
+    <circle cx="-27" cy="-25" r="1.5" fill="#fff"/>
+    <!-- Duck beak -->
+    <ellipse cx="-44" cy="-14" rx="14" ry="6" fill="#e8922f"/>
+    <!-- Duck wing -->
+    <ellipse cx="10" cy="14" rx="22" ry="16" fill="#dba810" transform="rotate(-10 10 14)"/>
+    <!-- Water ripples -->
+    <path d="M-50 42 Q-35 36 -20 42 Q-5 48 10 42 Q25 36 40 42 Q55 48 60 42" fill="none" stroke="#6c7086" stroke-width="3" stroke-linecap="round"/>
+    <path d="M-45 52 Q-30 46 -15 52 Q0 58 15 52 Q30 46 45 52" fill="none" stroke="#585b70" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+</svg>

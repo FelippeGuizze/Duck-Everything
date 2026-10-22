@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Graphite Control",
-  "version": "1.1.2",
+  "name": "Duck Everything",
+  "version": "2.0.0",
   "description": "Controle global de cópia, seleção, fullscreen e foco com opções independentes.",
   "permissions": [
     "storage",
@@ -20,7 +20,7 @@
     ]
   },
   "action": {
-    "default_title": "Graphite Control",
+    "default_title": "Duck Everything",
     "default_popup": "popup.html",
     "default_icon": "icon.svg"
   },
@@ -30,7 +30,7 @@
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "graphite-control@local.invalid",
+      "id": "duck-everything@local.invalid",
       "strict_min_version": "128.0"
     }
   }

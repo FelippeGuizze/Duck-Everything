@@ -1,1 +1,260 @@
-<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Graphite Control</title><link rel="stylesheet" href="popup.css"><body><header><h1>Graphite Control</h1></header><main><label class="row master"><span><b>Ativar globalmente</b><small>Preferências para todos os sites permitidos</small></span><input type="checkbox" id="enabled" role="switch"><i></i></label><div class="capture-actions"><button id="capture" class="capture" title="Escolher onde salvar o PNG da área visível">Salvar PNG…</button><button id="capture-quick" class="capture" title="Salvar PNG direto na pasta padrão de downloads, sem escolher local">PNG rápido</button></div><p class="note">Opções — role a lista para ver todas</p><section><label class="row"><span><b>Copiar e recortar</b><small>Preserva a cópia e o recorte nativos.</small></span><input type="checkbox" id="copy" role="switch"><i></i></label><label class="row"><span><b>Colar</b><small>Libera eventos de colagem.</small></span><input type="checkbox" id="paste" role="switch"><i></i></label><label class="row"><span><b>Botão direito</b><small>Restaura o menu do navegador.</small></span><input type="checkbox" id="context" role="switch"><i></i></label><label class="row"><span><b>Selecionar e arrastar</b><small>Força seleção de texto por CSS.</small></span><input type="checkbox" id="selection" role="switch"><i></i></label><label class="row"><span><b>Modo Absolute</b><small>Interceptação forte; pode afetar sites interativos.</small></span><input type="checkbox" id="absolute" role="switch"><i></i></label><label class="row"><span><b>Atalhos do teclado</b><small>Libera F5, F11, F12, Esc e atalhos Ctrl/Cmd.</small></span><input type="checkbox" id="shortcuts" role="switch"><i></i></label><label class="row"><span><b>Antifullscreen</b><small>Simula sucesso sem ampliar a janela.</small></span><input type="checkbox" id="fullscreen" role="switch"><i></i></label><label class="row"><span><b>Simular foco e visibilidade</b><small>Informa página visível e com foco.</small></span><input type="checkbox" id="focus" role="switch"><i></i></label><label class="row"><span><b>Liberar botão Voltar</b><small>Impede handlers de popstate da página.</small></span><input type="checkbox" id="history" role="switch"><i></i></label><label class="row"><span><b>Bloquear captura de teclado/mouse</b><small>Nega Keyboard Lock e Pointer Lock.</small></span><input type="checkbox" id="locks" role="switch"><i></i></label><label class="row"><span><b>Silenciar alertas JavaScript</b><small>Silencia alert(); mantém confirm() e prompt().</small></span><input type="checkbox" id="alerts" role="switch"><i></i></label></section><p class="note">Absolute pode afetar teclado, editores e arraste. Desative-o se um site parar de responder.</p><p id="status" role="status">Carregando…</p><div class="buttons"><button id="save">Salvar</button><button id="reload">Salvar e recarregar aba</button></div><div class="bulk-actions"><button id="reset" class="subtle">Ativar todas as opções</button><button id="disable-all" class="subtle">Desativar todas as opções</button></div></main><script src="defaults.js"></script><script src="popup.js"></script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <title>Duck Everything</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <!-- ════════ MAIN VIEW ════════ -->
+  <div id="view-main" class="view active">
+    <header>
+      <div class="header-left">
+        <img src="icon.svg" alt="" class="header-icon">
+        <h1>Duck Everything</h1>
+        <span class="version" id="version-tag"></span>
+      </div>
+      <div class="header-right">
+        <button id="btn-settings" class="icon-btn" title="Configurações">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="separator">
+      <span class="sep-label">controle</span>
+    </div>
+
+    <!-- Master toggle -->
+    <label class="row master">
+      <span class="toggle-dot" id="master-dot"></span>
+      <span class="row-text">
+        <b>Ativar globalmente</b>
+        <small>Preferências para todos os sites permitidos</small>
+      </span>
+      <input type="checkbox" id="enabled" role="switch">
+      <i class="switch"></i>
+    </label>
+
+    <div class="separator">
+      <span class="sep-label">captura</span>
+    </div>
+
+    <div class="capture-actions">
+      <button id="capture" class="capture" title="Escolher onde salvar o PNG da área visível">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Salvar PNG…
+      </button>
+      <button id="capture-quick" class="capture accent" title="Salvar PNG direto na pasta padrão de downloads">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        PNG rápido
+      </button>
+    </div>
+
+    <div class="separator">
+      <span class="sep-label">opções</span>
+    </div>
+
+    <section class="options-list">
+      <label class="row">
+        <span class="toggle-dot on"></span>
+        <span class="row-text">
+          <b>Copiar e recortar</b>
+          <small>Preserva a cópia e o recorte nativos.</small>
+        </span>
+        <input type="checkbox" id="copy" role="switch">
+        <i class="switch"></i>
+      </label>
+      <label class="row">
+        <span class="toggle-dot on"></span>
+        <span class="row-text">
+          <b>Colar</b>
+          <small>Libera eventos de colagem.</small>
+        </span>
+        <input type="checkbox" id="paste" role="switch">
+        <i class="switch"></i>
+      </label>
+      <label class="row">
+        <span class="toggle-dot on"></span>
+        <span class="row-text">
+          <b>Botão direito</b>
+          <small>Restaura o menu do navegador.</small>
+        </span>
+        <input type="checkbox" id="context" role="switch">
+        <i class="switch"></i>
+      </label>
+      <label class="row">
+        <span class="toggle-dot on"></span>
+        <span class="row-text">
+          <b>Selecionar e arrastar</b>
+          <small>Força seleção de texto por CSS.</small>
+        </span>
+        <input type="checkbox" id="selection" role="switch">
+        <i class="switch"></i>
+      </label>
+      <label class="row">
+        <span class="toggle-dot on"></span>
+        <span class="row-text">
+          <b>Modo Absolute</b>
+          <small>Interceptação forte; pode afetar sites interativos.</small>
+        </span>
+        <input type="checkbox" id="absolute" role="switch">
+        <i class="switch"></i>
+      </label>
+      <label class="row">
+        <span class="toggle-dot on"></span>
+        <span class="row-text">
+          <b>Atalhos do teclado</b>
+          <small>Libera F5, F11, F12, Esc e atalhos Ctrl/Cmd.</small>
+        </span>
+        <input type="checkbox" id="shortcuts" role="switch">
+        <i class="switch"></i>
+      </label>
+      <label class="row">
+        <span class="toggle-dot on"></span>
+        <span class="row-text">
+          <b>Antifullscreen</b>
+          <small>Simula sucesso sem ampliar a janela.</small>
+        </span>
+        <input type="checkbox" id="fullscreen" role="switch">
+        <i class="switch"></i>
+      </label>
+      <label class="row">
+        <span class="toggle-dot on"></span>
+        <span class="row-text">
+          <b>Simular foco e visibilidade</b>
+          <small>Informa página visível e com foco.</small>
+        </span>
+        <input type="checkbox" id="focus" role="switch">
+        <i class="switch"></i>
+      </label>
+      <label class="row">
+        <span class="toggle-dot on"></span>
+        <span class="row-text">
+          <b>Liberar botão Voltar</b>
+          <small>Impede handlers de popstate da página.</small>
+        </span>
+        <input type="checkbox" id="history" role="switch">
+        <i class="switch"></i>
+      </label>
+      <label class="row">
+        <span class="toggle-dot on"></span>
+        <span class="row-text">
+          <b>Bloquear captura de teclado/mouse</b>
+          <small>Nega Keyboard Lock e Pointer Lock.</small>
+        </span>
+        <input type="checkbox" id="locks" role="switch">
+        <i class="switch"></i>
+      </label>
+      <label class="row">
+        <span class="toggle-dot on"></span>
+        <span class="row-text">
+          <b>Silenciar alertas JavaScript</b>
+          <small>Silencia alert(); mantém confirm() e prompt().</small>
+        </span>
+        <input type="checkbox" id="alerts" role="switch">
+        <i class="switch"></i>
+      </label>
+    </section>
+
+    <div class="separator thin"></div>
+
+    <p id="status" role="status">Carregando…</p>
+
+    <div class="buttons">
+      <button id="save" class="btn-secondary">Salvar</button>
+      <button id="reload" class="btn-primary">Salvar e recarregar aba</button>
+    </div>
+
+    <div class="bulk-actions">
+      <button id="reset" class="subtle">Ativar todas as opções</button>
+      <button id="disable-all" class="subtle">Desativar todas as opções</button>
+    </div>
+
+    <footer>
+      <div class="separator thin"></div>
+      <div class="footer-bar">
+        <span class="footer-text">Duck Everything</span>
+        <div class="footer-icons">
+          <button id="btn-settings-footer" class="icon-btn-sm" title="Configurações">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ════════ SETTINGS VIEW ════════ -->
+  <div id="view-settings" class="view">
+    <header>
+      <div class="header-left">
+        <button id="btn-back" class="icon-btn" title="Voltar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"/>
+            <polyline points="12 19 5 12 12 5"/>
+          </svg>
+        </button>
+        <h1>Configurações</h1>
+      </div>
+    </header>
+
+    <div class="separator">
+      <span class="sep-label">aparência</span>
+    </div>
+
+    <div class="settings-section">
+      <div class="setting-item">
+        <div class="setting-info">
+          <b>Cor de destaque</b>
+          <small>Escolha uma cor para personalizar a interface, ou use a cor padrão do sistema.</small>
+        </div>
+        <div class="color-controls">
+          <label class="color-system-row">
+            <input type="checkbox" id="use-system-color" checked>
+            <span>Usar cor do sistema</span>
+          </label>
+          <div class="color-picker-row" id="custom-color-row">
+            <div class="color-preview" id="color-preview"></div>
+            <input type="color" id="accent-color" value="#7c6ee7">
+            <span class="color-hex" id="color-hex">#7c6ee7</span>
+          </div>
+          <div class="color-presets" id="color-presets">
+            <button class="preset" data-color="#7c6ee7" title="Roxo" style="background:#7c6ee7"></button>
+            <button class="preset" data-color="#e06c75" title="Vermelho" style="background:#e06c75"></button>
+            <button class="preset" data-color="#98c379" title="Verde" style="background:#98c379"></button>
+            <button class="preset" data-color="#e5c07b" title="Amarelo" style="background:#e5c07b"></button>
+            <button class="preset" data-color="#61afef" title="Azul" style="background:#61afef"></button>
+            <button class="preset" data-color="#c678dd" title="Magenta" style="background:#c678dd"></button>
+            <button class="preset" data-color="#56b6c2" title="Ciano" style="background:#56b6c2"></button>
+            <button class="preset" data-color="#f5c518" title="Duck Yellow" style="background:#f5c518"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="separator">
+      <span class="sep-label">informações</span>
+    </div>
+
+    <div class="settings-section">
+      <div class="info-row">
+        <span>Versão</span>
+        <span id="info-version" class="info-value"></span>
+      </div>
+      <div class="info-row">
+        <span>Motor</span>
+        <span class="info-value">WebExtensions MV3</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="defaults.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

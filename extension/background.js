@@ -1,10 +1,10 @@
 'use strict';
-const defaults = globalThis.GRAPHITE_DEFAULTS;
+const defaults = globalThis.DUCK_DEFAULTS;
 const normalize = value => Object.fromEntries(Object.entries(defaults).map(([k,v]) => [k, typeof value?.[k] === 'boolean' ? value[k] : v]));
 let queue = Promise.resolve();
 function serial(task) { const next = queue.then(task); queue = next.catch(()=>{}); return next; }
 async function install(settings) {
-  const id = 'graphite-main';
+  const id = 'duck-main';
   const existing = await browser.scripting.getRegisteredContentScripts({ids:[id]});
   if (!settings.enabled) {
     if(existing.length) await browser.scripting.unregisterContentScripts({ids:[id]});

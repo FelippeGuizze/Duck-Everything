@@ -1,7 +1,7 @@
 (() => {
   'use strict';
-  const cfg = globalThis.__graphite_boot_config__;
-  delete globalThis.__graphite_boot_config__;
+  const cfg = globalThis.__duck_boot_config__;
+  delete globalThis.__duck_boot_config__;
   if (!cfg) return;
   const define=(obj,key,desc)=>{try{Object.defineProperty(obj,key,{configurable:true,...desc});}catch{}};
   const method=(obj,key,value)=>define(obj,key,{writable:true,value});

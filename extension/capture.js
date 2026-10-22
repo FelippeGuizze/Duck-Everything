@@ -31,7 +31,7 @@ async function captureSite(tabId, saveAs=true) {
     objectUrl=URL.createObjectURL(new Blob([bytes],{type:'image/png'}));
     const stamp=new Date().toISOString().replace(/[:.]/g,'-');
     const downloadId=await browser.downloads.download({
-      url:objectUrl,filename:'Graphite-'+stamp+'.png',saveAs:saveAs!==false,conflictAction:'uniquify',
+      url:objectUrl,filename:'DuckEverything-'+stamp+'.png',saveAs:saveAs!==false,conflictAction:'uniquify',
       ...(tab.incognito ? {incognito:true} : {})
     });
     captureDownloads.set(downloadId,objectUrl);
