@@ -1,11 +1,19 @@
 'use strict';
 
 /* ═══════════════════════════════════════════════════════
-   Duck Everything — Popup Logic v2.1
+   Duck Everything — Popup Logic v2.2
    ═══════════════════════════════════════════════════════ */
 
 const keys = Object.keys(globalThis.DUCK_DEFAULTS);
 const status = document.getElementById('status');
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
 
 const errorText = e =>
   String(e?.message || e || 'Erro desconhecido')
@@ -21,15 +29,22 @@ const buttons = [
 ];
 const busy = value => buttons.forEach(b => b.disabled = value);
 
-/* ── Show active tab URL in footer ── */
+/* ── Show active tab URL in footer with www detection ── */
 browser.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
   const el = document.getElementById('footer-url');
   if (!el) return;
   try {
     const url = new URL(tab?.url || '');
-    el.textContent = url.hostname || tab?.url || '—';
+    const host = url.hostname;
+    if (host && host.startsWith('www.')) {
+      el.innerHTML = '<span class="url-prefix">www.</span><strong class="url-main">' + escapeHtml(host.slice(4)) + '</strong>';
+    } else if (host) {
+      el.innerHTML = '<strong class="url-main">' + escapeHtml(host) + '</strong>';
+    } else {
+      el.textContent = tab?.title || '—';
+    }
   } catch {
-    el.textContent = tab?.url || '—';
+    el.textContent = tab?.title || tab?.url || '—';
   }
 }).catch(() => {});
 
@@ -55,9 +70,10 @@ async function save(reload) {
       if (tab?.id !== undefined) await browser.tabs.reload(tab.id);
       status.textContent = 'Salvo. Recarregamento solicitado para esta aba.';
     }
+    // Fechar menu automaticamente após salvar
+    setTimeout(() => window.close(), 250);
   } catch (e) {
     status.textContent = 'Não foi possível concluir: ' + errorText(e);
-  } finally {
     busy(false);
   }
 }
@@ -80,14 +96,11 @@ async function takeCapture(saveAs) {
     const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
     if (!Number.isInteger(tab?.id)) throw new Error('Nenhuma aba disponível.');
     status.textContent = 'Preparando PNG da área visível…';
-    const result = await browser.runtime.sendMessage({ type: 'capture', tabId: tab.id, saveAs });
-    if (!result.ok) throw new Error(result.error);
-    status.textContent = saveAs
-      ? 'PNG encaminhado para salvamento.'
-      : 'Download do PNG iniciado na pasta padrão.';
+    browser.runtime.sendMessage({ type: 'capture', tabId: tab.id, saveAs });
+    // Fechar menu automaticamente após iniciar a captura
+    setTimeout(() => window.close(), 250);
   } catch (e) {
     status.textContent = 'Captura não concluída: ' + errorText(e);
-  } finally {
     busy(false);
   }
 }
@@ -122,29 +135,20 @@ document.getElementById('btn-back').onclick = () => switchView('main');
 
 /* ═══════════════════════════════════════════════════════
    ACCENT COLOR SYSTEM
-   - Detects OS accent color via CSS system keywords
-   - Color picker is embedded inside the preview swatch,
-     so the popup does NOT close when the native picker opens
-   - Remembers last custom color even when "use system" is on
    ═══════════════════════════════════════════════════════ */
 
-const colorHex           = document.getElementById('color-hex');
-const useSystemColor     = document.getElementById('use-system-color');
-const customColorRow     = document.getElementById('custom-color-row');
+const colorHex = document.getElementById('color-hex');
+const useSystemColor = document.getElementById('use-system-color');
+const customColorRow = document.getElementById('custom-color-row');
 const colorPresetsContainer = document.getElementById('color-presets');
-const presetButtons      = document.querySelectorAll('.preset');
+const presetButtons = document.querySelectorAll('.preset');
 
-// Default fallback accent
 const FALLBACK_ACCENT = '#7c6ee7';
 
-/* ── Move the <input type="color"> inside the preview div ──
-   This way clicking the swatch opens the picker without
-   the popup losing focus / closing.                        */
-const colorPreview  = document.getElementById('color-preview');
+const colorPreview = document.getElementById('color-preview');
 const accentColorInput = document.getElementById('accent-color');
-colorPreview.appendChild(accentColorInput);   // move into the swatch
+colorPreview.appendChild(accentColorInput);
 
-/* ── Detect system accent color ── */
 function getSystemAccentColor() {
   const probe = (keyword) => {
     const el = document.createElement('div');
@@ -166,7 +170,6 @@ function rgbToHex(rgb) {
     (+m[3]).toString(16).padStart(2, '0');
 }
 
-/* ── Apply accent color to all CSS vars ── */
 function applyAccent(hex) {
   if (!/^#[0-9a-f]{6}$/i.test(hex)) return;
   const root = document.documentElement;
@@ -183,21 +186,15 @@ function applyAccent(hex) {
   root.style.setProperty('--accent-hover', lighter);
   root.style.setProperty('--switch-bg-on', hex);
 
-  // Update swatch and hex label
   colorPreview.style.background = hex;
   if (colorHex) colorHex.textContent = hex;
   accentColorInput.value = hex;
 
-  // Highlight matching preset
   presetButtons.forEach(btn =>
     btn.classList.toggle('active', btn.dataset.color.toLowerCase() === hex.toLowerCase())
   );
 }
 
-/* ── Persist / load accent prefs ──
-   Structure: { useSystem: bool, customColor: '#rrggbb' }
-   customColor is ALWAYS stored, even when useSystem=true,
-   so switching back recovers the last chosen color.       */
 async function saveAccentPrefs(useSystem, customColor) {
   await browser.storage.local.set({ accentPrefs: { useSystem, customColor } });
 }
@@ -207,7 +204,6 @@ async function loadAccentPrefs() {
   return res.accentPrefs || { useSystem: true, customColor: FALLBACK_ACCENT };
 }
 
-/* ── Set picker disabled state ── */
 function setPickerEnabled(enabled) {
   if (enabled) {
     customColorRow.classList.remove('disabled');
@@ -218,7 +214,6 @@ function setPickerEnabled(enabled) {
   }
 }
 
-/* ── Init ── */
 async function initAccentColor() {
   const prefs = await loadAccentPrefs();
   useSystemColor.checked = prefs.useSystem;
@@ -232,17 +227,14 @@ async function initAccentColor() {
   }
 }
 
-/* ── Toggle system color ── */
 useSystemColor.addEventListener('change', async () => {
   const useSystem = useSystemColor.checked;
-  // Always read the saved customColor so we don't lose it
   const prefs = await loadAccentPrefs();
   const custom = prefs.customColor || FALLBACK_ACCENT;
 
   if (useSystem) {
     applyAccent(getSystemAccentColor());
     setPickerEnabled(false);
-    // Save useSystem=true, but keep customColor intact
     await saveAccentPrefs(true, custom);
   } else {
     applyAccent(custom);
@@ -251,17 +243,14 @@ useSystemColor.addEventListener('change', async () => {
   }
 });
 
-/* ── Color picker input (native, inside the swatch div) ── */
 accentColorInput.addEventListener('input', async () => {
   const hex = accentColorInput.value;
   applyAccent(hex);
-  // Save with useSystem=false automatically
   useSystemColor.checked = false;
   setPickerEnabled(true);
   await saveAccentPrefs(false, hex);
 });
 
-/* ── Preset buttons ── */
 presetButtons.forEach(btn => {
   btn.addEventListener('click', async () => {
     const hex = btn.dataset.color;
@@ -272,5 +261,4 @@ presetButtons.forEach(btn => {
   });
 });
 
-/* ── Kick off ── */
 initAccentColor();
