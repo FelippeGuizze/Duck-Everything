@@ -6,6 +6,7 @@
   const define=(obj,key,desc)=>{try{Object.defineProperty(obj,key,{configurable:true,...desc});}catch{}};
   const method=(obj,key,value)=>define(obj,key,{writable:true,value});
   const add=EventTarget.prototype.addEventListener;
+  const remove=EventTarget.prototype.removeEventListener;
   const on=(obj,type,fn)=>add.call(obj,type,fn,true);
   const stop=Event.prototype.stopImmediatePropagation;
   const keyAllowed=e=>{
@@ -62,11 +63,36 @@
     for(const k of ['webkitFullscreenElement','mozFullScreenElement'])if(k in Document.prototype)define(Document.prototype,k,{get:()=>active?.isConnected?active:null});
   }
   if(cfg.focus){
+    // Spoof de propriedades de visibilidade e foco
     define(Document.prototype,'hidden',{get:()=>false});
     define(Document.prototype,'visibilityState',{get:()=>'visible'});
-    method(Document.prototype,'hasFocus',()=>true);
+    define(Document.prototype,'hasFocus',{get:()=>()=>true});
+    // Bloqueia eventos nativos de blur/visibilitychange na janela
     on(window,'blur',e=>{if(e.target===window)stop.call(e);});
     on(window,'visibilitychange',e=>stop.call(e));
+    // Intercepta addEventListener/removeEventListener para suprimir focus/blur/visibilitychange
+    // Usa `add` e `remove` já capturados no topo, evitando quebrar o próprio `on()`
+    const SUPPRESSED = new Set(['focus','blur','focusin','focusout','visibilitychange']);
+    const wrapped = new WeakMap();
+    method(EventTarget.prototype,'addEventListener',function(type,fn,opts){
+      if(fn && (this===window||this===document) && SUPPRESSED.has(type)){
+        let w=wrapped.get(fn);
+        if(!w){w=()=>{};wrapped.set(fn,w);}
+        return add.call(this,type,w,opts);
+      }
+      return add.call(this,type,fn,opts);
+    });
+    method(EventTarget.prototype,'removeEventListener',function(type,fn,opts){
+      if(fn && (this===window||this===document) && SUPPRESSED.has(type)){
+        return remove.call(this,type,wrapped.get(fn)??fn,opts);
+      }
+      return remove.call(this,type,fn,opts);
+    });
+    // Cobre atribuição direta: window.onfocus = fn, window.onblur = fn
+    define(window,'onfocus',{get:()=>null,set:()=>{}});
+    define(window,'onblur',{get:()=>null,set:()=>{}});
+    // Cobre document.onvisibilitychange = fn
+    define(document,'onvisibilitychange',{get:()=>null,set:()=>{}});
   }
   if(cfg.history)on(window,'popstate',e=>stop.call(e));
   if(cfg.locks){
