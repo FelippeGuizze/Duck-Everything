@@ -1,0 +1,295 @@
+/* ═══════════════════════════════════════════════════════
+   Duck Everything — Laboratório de Testes (Styles)
+   ═══════════════════════════════════════════════════════ */
+
+:root {
+  --bg-base: #101216;
+  --bg-surface: #181b22;
+  --bg-elevated: #222631;
+  --bg-hover: #2c3240;
+  --border: #323847;
+  --border-subtle: #252b38;
+  --accent: #7c6ee7;
+  --accent-hover: #9184f0;
+  --accent-dim: #7c6ee733;
+  --text-main: #e6ebf5;
+  --text-muted: #8b93a7;
+  --green: #48c774;
+  --green-dim: #48c77422;
+  --red: #f14668;
+  --red-dim: #f1466822;
+  --yellow: #ffb822;
+  --yellow-dim: #ffb82222;
+  --radius: 8px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font: 14px/1.6 system-ui, -apple-system, sans-serif;
+  background: var(--bg-base);
+  color: var(--text-main);
+  padding: 30px 20px;
+}
+
+.container {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.header-logo {
+  width: 44px;
+  height: 44px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+.header-title h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+.header-title p {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-top: 2px;
+}
+.header-tip {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.header-tip strong {
+  color: var(--accent);
+}
+
+/* ── Grid Layout ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 10px;
+}
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* ── Status List ── */
+.status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.status-item {
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.status-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: monospace;
+}
+.status-badge {
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+  border-radius: 4px;
+  padding: 2px 6px;
+  width: fit-content;
+}
+.badge-on {
+  background: var(--green-dim);
+  color: var(--green);
+}
+.badge-off {
+  background: var(--border-subtle);
+  color: var(--text-muted);
+}
+.badge-warn {
+  background: var(--yellow-dim);
+  color: var(--yellow);
+}
+
+/* ── Interactive Elements ── */
+.btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+button {
+  background: var(--bg-elevated);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+button:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+  color: #fff;
+}
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+button.primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+button.danger {
+  background: var(--red-dim);
+  border-color: var(--red);
+  color: var(--red);
+}
+button.danger:hover {
+  background: var(--red);
+  color: #fff;
+}
+
+input, textarea {
+  width: 100%;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #fff;
+  font: 13px system-ui;
+  outline: none;
+  transition: border-color 0.15s;
+}
+input:focus, textarea:focus {
+  border-color: var(--accent);
+}
+textarea {
+  resize: vertical;
+  min-height: 54px;
+}
+
+.protected-box {
+  background: var(--bg-base);
+  border: 1px dashed var(--yellow);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--yellow);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+kbd {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--accent-hover);
+}
+
+/* ── Console Log Area ── */
+.console-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-top: 10px;
+  overflow: hidden;
+}
+.console-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+}
+.console-header h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  font-family: monospace;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.console-header .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+}
+pre#log {
+  background: #0b0d11;
+  color: #c9d1d9;
+  font: 12px/1.5 'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
+  padding: 16px;
+  height: 280px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  scrollbar-width: thin;
+}

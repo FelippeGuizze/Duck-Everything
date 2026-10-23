@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Duck Everything — Laboratório de Testes</title>
+  <link rel="stylesheet" href="lab.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-brand">
+        <div class="header-logo">🦆</div>
+        <div class="header-title">
+          <h1>Duck Everything — Laboratório</h1>
+          <p>Ambiente para testar todas as funcionalidades e proteções da extensão.</p>
+        </div>
+      </div>
+      <div class="header-tip">
+        Dica: Alterne as opções no <strong>Duck Everything</strong> e recarregue (<kbd>F5</kbd>) para ver o efeito.
+      </div>
+    </header>
+
+    <!-- Grid de Seções de Teste -->
+    <div class="grid">
+      
+      <!-- 1. Painel de Status em Tempo Real -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📊 Status do Navegador (Em Tempo Real)</span>
+        </div>
+        <p class="card-desc">Indica se a página está detectando o estado real ou o estado simulado pelo Duck Everything.</p>
+        <div class="status-grid">
+          <div class="status-item">
+            <span class="status-label">fullscreenElement</span>
+            <span id="stat-fullscreen-elem" class="status-badge badge-off">Nenhum</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">:fullscreen (CSS Real)</span>
+            <span id="stat-fullscreen-real" class="status-badge badge-off">Janela Normal</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">document.hidden</span>
+            <span id="stat-hidden" class="status-badge badge-on">Visível (hidden: false)</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">visibilityState</span>
+            <span id="stat-visibility" class="status-badge badge-on">visible</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">document.hasFocus()</span>
+            <span id="stat-focus" class="status-badge badge-on">Com Foco</span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">Detecções de Fuga de Aba</span>
+            <span id="stat-escapes" class="status-badge badge-on">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Testes de Teclado & Atalhos -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">⌨️ Teclado & Atalhos Bloqueados</span>
+        </div>
+        <p class="card-desc">O script hostil tenta bloquear <kbd>F5</kbd>, <kbd>F11</kbd>, <kbd>F12</kbd>, <kbd>Esc</kbd>, <kbd>Ctrl+C</kbd>, <kbd>Ctrl+V</kbd>, <kbd>Ctrl+R</kbd>, <kbd>Ctrl+U</kbd>. Pressione qualquer tecla real ou use os botões abaixo:</p>
+        <div class="btn-group">
+          <button id="btn-check-shortcuts" class="primary">▶ Testar atalhos sintéticos</button>
+        </div>
+        <input type="text" placeholder="Clique aqui e pressione QUALQUER tecla para testar o log real">
+      </div>
+
+      <!-- 3. Área de Transferência & Menu de Contexto -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📋 Cópia, Colagem & Botão Direito</span>
+        </div>
+        <p class="card-desc">Tente selecionar o texto protegido abaixo, clicar com botão direito ou colar no campo:</p>
+        <div class="protected-box" id="selection-box" onselectstart="return false">
+          🔒 Este texto tem "user-select: none" e "onselectstart" bloqueado pelo site. O Duck Everything força a seleção.
+        </div>
+        <textarea placeholder="Cole um texto aqui (o site tenta bloquear via onpaste)..."></textarea>
+        <div class="btn-group">
+          <button id="btn-test-clipboard">Testar eventos copy/cut/paste</button>
+        </div>
+      </div>
+
+      <!-- 4. Antifullscreen -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🖥️ Antifullscreen</span>
+        </div>
+        <p class="card-desc">Quando ativo, o Duck Everything responde com sucesso ao pedido de tela cheia sem ampliar a janela do navegador.</p>
+        <div class="btn-group">
+          <button id="btn-start-fullscreen" class="primary">Solicitar Fullscreen</button>
+          <button id="btn-exit-fullscreen">Sair de Fullscreen</button>
+        </div>
+      </div>
+
+      <!-- 5. Foco & Visibilidade (Anti-Proctoring) -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">👁️ Foco & Visibilidade</span>
+        </div>
+        <p class="card-desc">Simula perda de foco ao trocar de aba ou minimizar a janela. Com a opção ativa, a página acredita que continua visível e em foco.</p>
+        <div class="btn-group">
+          <button id="btn-simulate-blur">Simular blur na janela</button>
+          <button id="btn-simulate-visibility">Simular visibilitychange</button>
+        </div>
+      </div>
+
+      <!-- 6. Travas de Sistema (Locks & History & Alert) -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🛡️ Travas, Histórico & Alertas</span>
+        </div>
+        <p class="card-desc">Testa rejeição de Pointer Lock, Keyboard Lock, proteção contra traps de botão Voltar e silenciamento de alert().</p>
+        <div class="btn-group">
+          <button id="btn-test-locks">Testar Keyboard / Pointer Lock</button>
+          <button id="btn-test-history">Testar Botão Voltar (popstate)</button>
+          <button id="btn-test-alert">Testar alert()</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Console de Logs em Tempo Real -->
+    <div class="console-card">
+      <div class="console-header">
+        <h3><span class="dot"></span> Monitor de Eventos & Teclado em Tempo Real</h3>
+        <button id="btn-clear-log">Limpar Logs</button>
+      </div>
+      <pre id="log"></pre>
+    </div>
+  </div>
+
+  <!-- SCRIPT HOSTIL: Tenta bloquear ações comuns -->
+  <script>
+    window.addEventListener('error', function(e) {
+      const el = document.getElementById('log');
+      if (el) el.textContent += '[ERRO NO SCRIPT] ' + e.message + ' em ' + e.filename + ':' + e.lineno + '\n';
+    });
+
+    // 1. Bloqueio de Menu de Contexto (botão direito)
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+    }, false);
+
+    // 2. Bloqueio de Eventos de Clipboard
+    ['copy', 'cut', 'paste'].forEach(function(type) {
+      document.addEventListener(type, function(e) {
+        e.preventDefault();
+      }, false);
+    });
+
+    // 3. Bloqueio de Seleção e Arrastar
+    ['selectstart', 'dragstart'].forEach(function(type) {
+      document.addEventListener(type, function(e) {
+        e.preventDefault();
+      }, false);
+    });
+
+    // 4. Bloqueio de Teclas de Atalho (Teclado)
+    document.addEventListener('keydown', function(e) {
+      var key = (e.key || '').toLowerCase();
+      if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && key === 'r')) e.preventDefault();
+      if ((e.ctrlKey || e.metaKey) && (key === 'c' || key === 'x')) e.preventDefault();
+      if ((e.ctrlKey || e.metaKey) && key === 'v') e.preventDefault();
+      if ((e.ctrlKey || e.metaKey) && key === 'u') e.preventDefault();
+      if (e.key === 'F12' || ((e.ctrlKey || e.metaKey) && e.shiftKey && key === 'i')) e.preventDefault();
+      if (e.key === 'F11') e.preventDefault();
+      if (e.key === 'Escape' || e.key === 'Esc') e.preventDefault();
+    }, false);
+
+    // 5. Armadilha de Histórico
+    try {
+      history.pushState({ page: 1 }, '', location.href);
+      window.addEventListener('popstate', function() {
+        history.pushState({ page: 1 }, '', location.href);
+      });
+    } catch (e) {}
+
+    // 6. Monitoramento de Foco / Troca de Aba
+    window.__hostileTabEscapes = 0;
+    window.addEventListener('blur', function() {
+      window.__hostileTabEscapes = (window.__hostileTabEscapes || 0) + 1;
+    });
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'hidden' || document.hidden) {
+        window.__hostileTabEscapes = (window.__hostileTabEscapes || 0) + 1;
+      }
+    });
+  </script>
+
+  <!-- SCRIPT DO LABORATÓRIO: Monitoramento e controles -->
+  <script>
+    (function() {
+      var logBox = document.getElementById('log');
+
+      function pad(n) { return String(n).padStart(2, '0'); }
+      function timestamp() {
+        var d = new Date();
+        return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()) + '.' + String(d.getMilliseconds()).padStart(3, '0');
+      }
+
+      function appendLog(category, msg) {
+        var el = document.getElementById('log');
+        if (!el) return;
+        var time = timestamp();
+        var line = '[' + time + '] [' + category.toUpperCase() + '] ' + msg + '\n';
+        el.textContent += line;
+        el.scrollTop = el.scrollHeight;
+      }
+
+      // 1. MONITORAMENTO REAL DO TECLADO
+      window.addEventListener('keydown', function(e) {
+        try {
+          var modifiers = [];
+          if (e.ctrlKey) modifiers.push('Ctrl');
+          if (e.shiftKey) modifiers.push('Shift');
+          if (e.altKey) modifiers.push('Alt');
+          if (e.metaKey) modifiers.push('Meta/Cmd');
+
+          var modStr = modifiers.length ? ' + [' + modifiers.join('+') + ']' : '';
+          var status = e.defaultPrevented ? '❌ BLOQUEADO (preventDefault = true)' : '✅ LIBERADO (preventDefault = false)';
+
+          appendLog('TECLADO', 'Tecla: "' + e.key + '" (código: ' + e.code + ')' + modStr + ' | ' + status);
+        } catch (err) {
+          console.error(err);
+        }
+      }, true);
+
+      // 2. MONITORAMENTO DE CLIPBOARD E MOUSE
+      ['copy', 'cut', 'paste'].forEach(function(type) {
+        document.addEventListener(type, function(e) {
+          try {
+            var status = e.defaultPrevented ? '❌ BLOQUEADO pelo site' : '✅ LIBERADO pelo navegador';
+            appendLog('CLIPBOARD', 'Evento "' + type + '" acionado | ' + status);
+          } catch (err) {}
+        }, true);
+      });
+
+      document.addEventListener('contextmenu', function(e) {
+        try {
+          var status = e.defaultPrevented ? '❌ BLOQUEADO pelo site' : '✅ LIBERADO pelo navegador (menu de contexto deve abrir)';
+          appendLog('MOUSE', 'Clique com botão direito (contextmenu) | ' + status);
+        } catch (err) {}
+      }, true);
+
+      // 3. MONITORAMENTO DE FOCO E VISIBILIDADE
+      window.addEventListener('blur', function() {
+        appendLog('FOCO', 'Evento "blur" recebido pela janela (perdeu foco)');
+      }, true);
+
+      window.addEventListener('focus', function() {
+        appendLog('FOCO', 'Evento "focus" recebido pela janela (ganhou foco)');
+      }, true);
+
+      document.addEventListener('visibilitychange', function() {
+        try {
+          appendLog('VISIBILIDADE', 'visibilityState mudou para: "' + document.visibilityState + '" (hidden: ' + document.hidden + ')');
+        } catch (err) {}
+      }, true);
+
+      document.addEventListener('fullscreenchange', function() {
+        appendLog('FULLSCREEN', 'fullscreenchange disparado! fullscreenElement=' + !!document.fullscreenElement);
+        updateStatus();
+      });
+
+      // 4. ATUALIZAÇÃO DO PAINEL DE STATUS
+      function updateStatus() {
+        try {
+          var fsElem = false;
+          try { fsElem = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement); } catch (e) {}
+
+          var realCSS = false;
+          try {
+            if (fsElem) {
+              realCSS = !!(document.querySelector(':fullscreen') || document.querySelector(':-moz-full-screen') || document.querySelector(':-webkit-full-screen'));
+            }
+          } catch (e) {}
+
+          var hidden = false;
+          try { hidden = !!document.hidden; } catch (e) {}
+
+          var visState = 'visible';
+          try { visState = document.visibilityState || 'visible'; } catch (e) {}
+
+          var focus = true;
+          try { focus = typeof document.hasFocus === 'function' ? document.hasFocus() : true; } catch (e) {}
+
+          var escapes = window.__hostileTabEscapes || 0;
+
+          function setBadge(id, active, activeText, inactiveText) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            el.textContent = active ? activeText : inactiveText;
+            el.className = 'status-badge ' + (active ? 'badge-on' : 'badge-off');
+          }
+
+          setBadge('stat-fullscreen-elem', fsElem, 'Ativo (Simulado/Real)', 'Nenhum');
+          setBadge('stat-fullscreen-real', realCSS, 'Em Tela Cheia Real', 'Janela Normal');
+          setBadge('stat-hidden', !hidden, 'Visível (hidden: false)', 'Oculto (hidden: true)');
+          setBadge('stat-visibility', visState === 'visible', 'visible', visState);
+          setBadge('stat-focus', focus, 'Com Foco', 'Sem Foco');
+
+          var escapeEl = document.getElementById('stat-escapes');
+          if (escapeEl) {
+            escapeEl.textContent = escapes;
+            escapeEl.className = 'status-badge ' + (escapes > 0 ? 'badge-warn' : 'badge-on');
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      // 5. REGISTRO IMEDIATO DOS BOTÕES
+      function bind(id, fn) {
+        var el = document.getElementById(id);
+        if (el) {
+          el.onclick = fn;
+        }
+      }
+
+      bind('btn-start-fullscreen', function() {
+        try {
+          appendLog('FULLSCREEN', 'Chamando document.documentElement.requestFullscreen()…');
+          var elem = document.documentElement;
+          var requestFn = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.mozRequestFullScreen;
+          if (!requestFn) {
+            appendLog('FULLSCREEN', 'requestFullscreen não suportado neste navegador.');
+            return;
+          }
+          var promise = requestFn.call(elem);
+          if (promise && typeof promise.then === 'function') {
+            promise.then(function() {
+              appendLog('FULLSCREEN', 'Promise de fullscreen resolvida com SUCESSO! (Com Antifullscreen ativo, a janela real NÃO expande)');
+              updateStatus();
+            }).catch(function(e) {
+              appendLog('FULLSCREEN', 'Fullscreen rejeitado/falhou: ' + e.name + ' - ' + e.message);
+              updateStatus();
+            });
+          } else {
+            appendLog('FULLSCREEN', 'requestFullscreen executado (modo legado).');
+            updateStatus();
+          }
+        } catch (e) {
+          appendLog('FULLSCREEN', 'Erro ao chamar fullscreen: ' + e.message);
+        }
+      });
+
+      bind('btn-exit-fullscreen', function() {
+        try {
+          appendLog('FULLSCREEN', 'Chamando document.exitFullscreen()…');
+          var exitFn = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen;
+          if (exitFn) {
+            var promise = exitFn.call(document);
+            if (promise && typeof promise.then === 'function') {
+              promise.then(function() {
+                appendLog('FULLSCREEN', 'Saída de fullscreen concluída.');
+                updateStatus();
+              }).catch(function(e) {
+                appendLog('FULLSCREEN', 'Erro ao sair: ' + e.message);
+              });
+            } else {
+              appendLog('FULLSCREEN', 'Saída de fullscreen chamada.');
+              updateStatus();
+            }
+          }
+        } catch (e) {
+          appendLog('FULLSCREEN', 'Erro ao sair do fullscreen: ' + e.message);
+        }
+      });
+
+      bind('btn-check-shortcuts', function() {
+        appendLog('TESTE', '--- Iniciando teste sintético de atalhos protegidos ---');
+        var tests = [
+          { key: 'F5', ctrlKey: false },
+          { key: 'F11', ctrlKey: false },
+          { key: 'F12', ctrlKey: false },
+          { key: 'Escape', ctrlKey: false },
+          { key: 'c', ctrlKey: true },
+          { key: 'v', ctrlKey: true },
+          { key: 'r', ctrlKey: true },
+          { key: 'u', ctrlKey: true }
+        ];
+
+        tests.forEach(function(item) {
+          var e = new KeyboardEvent('keydown', { key: item.key, ctrlKey: item.ctrlKey, bubbles: true, cancelable: true });
+          document.dispatchEvent(e);
+          var label = (item.ctrlKey ? 'Ctrl+' : '') + item.key;
+          var status = e.defaultPrevented ? '❌ Bloqueado pelo site' : '✅ Liberado pelo Duck Everything';
+          appendLog('ATALHO', label + ': ' + status);
+        });
+
+        var ctx = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+        document.dispatchEvent(ctx);
+        appendLog('ATALHO', 'Botão direito (contextmenu): ' + (ctx.defaultPrevented ? '❌ Bloqueado' : '✅ Liberado'));
+      });
+
+      bind('btn-simulate-blur', function() {
+        appendLog('TESTE', 'Disparando evento sintético window.blur…');
+        window.dispatchEvent(new Event('blur'));
+        updateStatus();
+      });
+
+      bind('btn-simulate-visibility', function() {
+        appendLog('TESTE', 'Disparando evento sintético document.visibilitychange…');
+        document.dispatchEvent(new Event('visibilitychange'));
+        updateStatus();
+      });
+
+      bind('btn-test-clipboard', function() {
+        appendLog('TESTE', '--- Testando eventos de cópia/colagem ---');
+        ['copy', 'cut', 'paste'].forEach(function(type) {
+          var e = new Event(type, { bubbles: true, cancelable: true });
+          document.dispatchEvent(e);
+          var status = e.defaultPrevented ? '❌ Bloqueado' : '✅ Liberado';
+          appendLog('CLIPBOARD', type + ': ' + status);
+        });
+      });
+
+      bind('btn-test-alert', function() {
+        appendLog('ALERTA', 'Chamando window.alert("Teste Duck Everything")…');
+        var start = performance.now();
+        window.alert('Se você está lendo isso, a opção "Silenciar alertas" está desligada ou desativada.');
+        var duration = performance.now() - start;
+        if (duration < 50) {
+          appendLog('ALERTA', 'window.alert() executou em ' + duration.toFixed(1) + 'ms sem travar a tela (SILENCIADO com sucesso pelo Duck Everything)');
+        } else {
+          appendLog('ALERTA', 'window.alert() exibiu popup e bloqueou por ' + duration.toFixed(0) + 'ms (Alerta NÃO silenciado)');
+        }
+      });
+
+      bind('btn-test-locks', function() {
+        appendLog('LOCKS', '--- Testando proteções contra trava de mouse e teclado ---');
+        try {
+          if (document.documentElement.requestPointerLock) {
+            appendLog('LOCKS', 'Chamando document.documentElement.requestPointerLock()…');
+            var p = document.documentElement.requestPointerLock();
+            if (p && typeof p.then === 'function') {
+              p.then(function() {
+                appendLog('LOCKS', 'Pointer Lock aceito! (Opção "Bloquear captura" desligada)');
+              }).catch(function(e) {
+                appendLog('LOCKS', 'Pointer Lock NEGADO: ' + e.name + ' (' + e.message + ') ✅ (Protegido pelo Duck Everything)');
+              });
+            }
+          }
+        } catch (e) {
+          appendLog('LOCKS', 'Pointer Lock erro: ' + e.message);
+        }
+
+        try {
+          if (navigator.keyboard && navigator.keyboard.lock) {
+            appendLog('LOCKS', 'Chamando navigator.keyboard.lock()…');
+            navigator.keyboard.lock().then(function() {
+              appendLog('LOCKS', 'Keyboard Lock aceito! (Opção "Bloquear captura" desligada)');
+            }).catch(function(e) {
+              appendLog('LOCKS', 'Keyboard Lock NEGADO: ' + e.name + ' (' + e.message + ') ✅ (Protegido pelo Duck Everything)');
+            });
+          } else {
+            appendLog('LOCKS', 'navigator.keyboard.lock não suportado nativamente neste navegador.');
+          }
+        } catch (e) {
+          appendLog('LOCKS', 'Keyboard Lock erro: ' + e.message);
+        }
+      });
+
+      bind('btn-test-history', function() {
+        appendLog('HISTÓRICO', 'Testando botão voltar: empurrando estado e disparando popstate…');
+        try {
+          history.pushState({ page: 'teste' }, '', location.href);
+          var e = new PopStateEvent('popstate', { state: { page: 'teste' }, bubbles: true, cancelable: true });
+          window.dispatchEvent(e);
+          appendLog('HISTÓRICO', 'Evento popstate despachado. Se "Liberar botão Voltar" estiver ativo, handlers hostis foram interceptados.');
+        } catch (err) {
+          appendLog('HISTÓRICO', 'Erro ao testar histórico: ' + err.message);
+        }
+      });
+
+      bind('btn-clear-log', function() {
+        var el = document.getElementById('log');
+        if (el) el.textContent = '';
+      });
+
+      // 6. EXECUÇÃO IMEDIATA E CONTÍNUA
+      updateStatus();
+      setInterval(updateStatus, 500);
+      appendLog('SISTEMA', 'Laboratório Duck Everything iniciado com sucesso! Pressione qualquer tecla ou use os botões acima para testar.');
+
+    })();
+  </script>
+</body>
+</html>
