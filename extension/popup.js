@@ -64,9 +64,18 @@ browser.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
     const url = new URL(tab?.url || '');
     const host = url.hostname;
     if (host && host.startsWith('www.')) {
-      el.innerHTML = '<span class="url-prefix">www.</span><strong class="url-main">' + escapeHtml(host.slice(4)) + '</strong>';
+      const prefix = document.createElement('span');
+      prefix.className = 'url-prefix';
+      prefix.textContent = 'www.';
+      const main = document.createElement('strong');
+      main.className = 'url-main';
+      main.textContent = host.slice(4);
+      el.replaceChildren(prefix, main);
     } else if (host) {
-      el.innerHTML = '<strong class="url-main">' + escapeHtml(host) + '</strong>';
+      const main = document.createElement('strong');
+      main.className = 'url-main';
+      main.textContent = host;
+      el.replaceChildren(main);
     } else {
       el.textContent = tab?.title || '—';
     }
