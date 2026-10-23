@@ -1,0 +1,226 @@
+/* ═══════════════════════════════════════════════════════
+   Duck Everything — Modo ampliado em blocos
+   Carregue DEPOIS de popup.css. Nada aqui afeta o layout
+   padrão: tudo do modo ampliado fica sob html[data-layout="wide"].
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Seletor de tamanho (aba Configurações, vale nos dois modos) ── */
+.layout-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.layout-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 10px;
+  text-align: left;
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+.layout-opt:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+}
+.layout-opt:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.layout-opt.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  box-shadow: 0 0 0 1px var(--accent-dim);
+}
+.layout-opt svg {
+  width: 100%;
+  height: 54px;
+  display: block;
+}
+.layout-opt .thumb-bg   { fill: var(--bg-base); stroke: var(--border); }
+.layout-opt .thumb-line { fill: var(--switch-bg); }
+.layout-opt .thumb-main { fill: var(--accent); }
+.layout-opt b {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.layout-opt small {
+  display: block;
+  font-size: 10.5px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+  margin-top: 1px;
+}
+
+/* ═══════════════════════════════════════════════════════
+   MODO AMPLIADO — o Firefox limita popups a 800 × 600 px,
+   então a largura vai ao máximo e a altura se aproveita
+   com blocos em grade (menos rolagem que a lista).
+   ═══════════════════════════════════════════════════════ */
+html[data-layout="wide"],
+html[data-layout="wide"] body {
+  width: 800px;
+  height: 600px;
+}
+
+/* Tela principal vira uma grade: coluna de controle + coluna de opções */
+html[data-layout="wide"] #view-main.active {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+  column-gap: 4px;
+}
+html[data-layout="wide"] #view-main > header       { grid-column: 1 / -1; grid-row: 1; }
+html[data-layout="wide"] #view-main > .separator:nth-child(2) { grid-column: 1; grid-row: 2; }
+html[data-layout="wide"] #view-main > .master-wrap { grid-column: 1; grid-row: 3; }
+html[data-layout="wide"] #view-main > .separator:nth-child(4) { grid-column: 1; grid-row: 4; }
+html[data-layout="wide"] #view-main > .capture-actions { grid-column: 1; grid-row: 5; }
+html[data-layout="wide"] #view-main > .separator:nth-child(6) { grid-column: 2; grid-row: 2; }
+html[data-layout="wide"] #view-main > .options-list { grid-column: 2; grid-row: 3 / 6; }
+html[data-layout="wide"] #view-main > .bottom-area { grid-column: 1 / -1; grid-row: 6; }
+
+/* ── Botão principal: o maior bloco, ocupa toda a altura da coluna ── */
+html[data-layout="wide"] .master-wrap {
+  display: flex;
+  padding: 6px 4px 8px 16px;
+  min-height: 0;
+}
+html[data-layout="wide"] .master-wrap .row {
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 14px;
+  text-align: center;
+}
+html[data-layout="wide"] .master-wrap .row-text { flex: 0 0 auto; }
+html[data-layout="wide"] .master-wrap .row-text b {
+  font-size: 17px;
+  letter-spacing: -0.2px;
+}
+html[data-layout="wide"] .master-wrap .row-text small {
+  font-size: 11.5px;
+  margin-top: 6px;
+  line-height: 1.45;
+}
+html[data-layout="wide"] .master-wrap .switch {
+  order: -1;
+  width: 64px;
+  height: 36px;
+  border-radius: 36px;
+}
+html[data-layout="wide"] .master-wrap .switch::after {
+  width: 28px;
+  height: 28px;
+  top: 4px;
+  left: 4px;
+}
+html[data-layout="wide"] .master-wrap input:checked + .switch::after {
+  left: 32px;
+}
+
+/* ── Captura: botões empilhados na coluna da esquerda ── */
+html[data-layout="wide"] .capture-actions {
+  flex-direction: column;
+  padding: 5px 4px 8px 16px;
+}
+html[data-layout="wide"] .capture { padding: 9px 10px; }
+
+/* ── Opções: blocos lado a lado (3 por linha) ── */
+html[data-layout="wide"] .options-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: min-content;
+  align-content: start;
+  gap: 8px;
+  padding: 6px 12px 8px 12px;
+}
+html[data-layout="wide"] .options-list .row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto 1fr;
+  align-items: start;
+  column-gap: 8px;
+  row-gap: 4px;
+  margin: 0;
+  padding: 10px 11px;
+}
+/* título e descrição entram direto na grade do bloco */
+html[data-layout="wide"] .options-list .row-text { display: contents; }
+html[data-layout="wide"] .options-list .row-text b {
+  grid-column: 1;
+  grid-row: 1;
+  line-height: 1.3;
+}
+html[data-layout="wide"] .options-list .row-text small {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin-top: 0;
+}
+html[data-layout="wide"] .options-list .switch {
+  grid-column: 2;
+  grid-row: 1;
+}
+/* linhas dividem a altura disponível por igual, sem rolagem */
+html[data-layout="wide"] .options-list {
+  grid-auto-rows: minmax(min-content, 1fr);
+  align-content: stretch;
+}
+
+/* texto do botão principal: curto no padrão, explicativo no ampliado */
+.row-text small.when-wide { display: none; }
+html[data-layout="wide"] .row-text small.when-compact { display: none; }
+html[data-layout="wide"] .row-text small.when-wide { display: block; }
+
+/* ── Área inferior: status e atalhos à esquerda, botões à direita ── */
+html[data-layout="wide"] .bottom-area {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 420px;
+  grid-template-rows: auto auto auto auto;
+}
+html[data-layout="wide"] .bottom-area > .separator.thin {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  margin: 6px 16px;
+}
+html[data-layout="wide"] .bottom-area > #status {
+  grid-column: 1;
+  grid-row: 2;
+  align-self: center;
+  margin: 0;
+  text-align: left;
+}
+html[data-layout="wide"] .bottom-area > .bulk-actions {
+  grid-column: 1;
+  grid-row: 3;
+  align-self: center;
+}
+html[data-layout="wide"] .bottom-area > .buttons {
+  grid-column: 2;
+  grid-row: 2 / 4;
+  align-self: center;
+  margin: 0;
+  padding: 0 16px 0 0;
+}
+html[data-layout="wide"] .bottom-area > footer {
+  grid-column: 1 / -1;
+  grid-row: 4;
+}
+html[data-layout="wide"] .footer-url { max-width: 640px; }
+
+/* Salvar e Salvar e recarregar com peso parecido */
+html[data-layout="wide"] .buttons .btn-secondary,
+html[data-layout="wide"] .buttons .btn-primary {
+  padding: 11px 16px;
+  font-size: 13px;
+}
+html[data-layout="wide"] .buttons .btn-secondary { flex: 1 1 0; }
+html[data-layout="wide"] .buttons .btn-primary   { flex: 1.2 1 0; }

@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>Duck Everything</title>
   <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="popup-wide.css">
 </head>
 <body>
   <!-- ════════ MAIN VIEW ════════ -->
@@ -24,7 +25,8 @@
       <label class="row" id="master-row">
         <span class="row-text">
           <b>Ativar globalmente</b>
-          <small>Preferências para todos os sites permitidos</small>
+          <small class="when-compact">Preferências para todos os sites permitidos</small>
+          <small class="when-wide">Liga ou desliga a extensão em todos os sites. Com ela ligada, as opções ao lado passam a valer e podem alterar o funcionamento de algumas páginas.</small>
         </span>
         <input type="checkbox" id="enabled" role="switch">
         <i class="switch"></i>
@@ -229,6 +231,41 @@
         </div>
       </div>
     </div>
+
+<div class="separator">
+  <span class="sep-label">interface</span>
+</div>
+
+<div class="settings-section">
+  <div class="layout-picker">
+    <button class="layout-opt" data-layout="compact" aria-pressed="true">
+      <svg viewBox="0 0 120 54" aria-hidden="true">
+        <rect class="thumb-bg" x="38" y="1" width="44" height="52" rx="4"/>
+        <rect class="thumb-main" x="42" y="6" width="36" height="8" rx="2"/>
+        <rect class="thumb-line" x="42" y="18" width="36" height="5" rx="2"/>
+        <rect class="thumb-line" x="42" y="26" width="36" height="5" rx="2"/>
+        <rect class="thumb-line" x="42" y="34" width="36" height="5" rx="2"/>
+        <rect class="thumb-line" x="42" y="42" width="36" height="5" rx="2"/>
+      </svg>
+      <span><b>Padrão</b><small>Lista compacta, como é hoje.</small></span>
+    </button>
+    <button class="layout-opt" data-layout="wide" aria-pressed="false">
+      <svg viewBox="0 0 120 54" aria-hidden="true">
+        <rect class="thumb-bg" x="1" y="1" width="118" height="52" rx="4"/>
+        <rect class="thumb-main" x="6" y="6" width="26" height="42" rx="3"/>
+        <rect class="thumb-line" x="37" y="6" width="23" height="12" rx="2"/>
+        <rect class="thumb-line" x="63" y="6" width="23" height="12" rx="2"/>
+        <rect class="thumb-line" x="89" y="6" width="25" height="12" rx="2"/>
+        <rect class="thumb-line" x="37" y="21" width="23" height="12" rx="2"/>
+        <rect class="thumb-line" x="63" y="21" width="23" height="12" rx="2"/>
+        <rect class="thumb-line" x="89" y="21" width="25" height="12" rx="2"/>
+        <rect class="thumb-line" x="37" y="36" width="23" height="12" rx="2"/>
+        <rect class="thumb-line" x="63" y="36" width="23" height="12" rx="2"/>
+      </svg>
+      <span><b>Ampliado em blocos</b><small>Mais largo, opções lado a lado.</small></span>
+    </button>
+  </div>
+</div>
 
     <div class="separator">
       <span class="sep-label">sobre</span>

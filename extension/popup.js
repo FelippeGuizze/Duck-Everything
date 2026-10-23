@@ -1,5 +1,25 @@
 'use strict';
 
+/* ── Tamanho da interface (padrão / ampliado) ── */
+const LAYOUT_KEY = 'duckLayout';
+const layoutButtons = document.querySelectorAll('.layout-opt');
+function applyLayout(mode) {
+  const m = mode === 'wide' ? 'wide' : 'compact';
+  document.documentElement.dataset.layout = m;
+  layoutButtons.forEach(b => {
+    const on = b.dataset.layout === m;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+}
+let savedLayout = null;
+try { savedLayout = localStorage.getItem(LAYOUT_KEY); } catch {}
+applyLayout(savedLayout);
+layoutButtons.forEach(b => b.addEventListener('click', () => {
+  applyLayout(b.dataset.layout);
+  try { localStorage.setItem(LAYOUT_KEY, b.dataset.layout); } catch {}
+}));
+
 /* ═══════════════════════════════════════════════════════
    Duck Everything — Popup Logic v2.2
    ═══════════════════════════════════════════════════════ */
@@ -21,10 +41,10 @@ const errorText = e =>
     .replace(/blob:[^\s]+/gi, '[arquivo temporário]')
     .slice(0, 240);
 
-/* Exclude preset, icon and gear buttons from busy lock */
+/* Exclude preset, icon, gear and layout buttons from busy lock */
 const buttons = [
   ...document.querySelectorAll(
-    'button:not(.preset):not(.icon-btn):not(.icon-btn-gear)'
+    'button:not(.preset):not(.icon-btn):not(.icon-btn-gear):not(.layout-opt)'
   )
 ];
 const busy = value => buttons.forEach(b => b.disabled = value);
