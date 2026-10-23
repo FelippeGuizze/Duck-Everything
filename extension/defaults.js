@@ -1,1 +1,1 @@
-globalThis.DUCK_DEFAULTS = {"enabled": true, "copy": true, "paste": true, "context": true, "selection": true, "absolute": true, "shortcuts": true, "fullscreen": true, "focus": true, "history": true, "locks": true, "alerts": true};
+globalThis.DUCK_DEFAULTS = {"enabled": true, "copy": true, "paste": true, "context": true, "selection": true, "absolute": true, "shortcuts": true, "fullscreen": true, "focus": true, "history": true, "locks": true, "alerts": true, "scribd": true};

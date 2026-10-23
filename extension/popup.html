@@ -20,14 +20,16 @@
     </div>
 
     <!-- Master toggle -->
-    <label class="row master" id="master-row">
-      <span class="row-text">
-        <b>Ativar globalmente</b>
-        <small>Preferências para todos os sites permitidos</small>
-      </span>
-      <input type="checkbox" id="enabled" role="switch">
-      <i class="switch"></i>
-    </label>
+    <div class="master-wrap">
+      <label class="row" id="master-row">
+        <span class="row-text">
+          <b>Ativar globalmente</b>
+          <small>Preferências para todos os sites permitidos</small>
+        </span>
+        <input type="checkbox" id="enabled" role="switch">
+        <i class="switch"></i>
+      </label>
+    </div>
 
     <div class="separator">
       <span class="sep-label">captura</span>
@@ -135,6 +137,14 @@
           <small>Silencia alert(); mantém confirm() e prompt().</small>
         </span>
         <input type="checkbox" id="alerts" role="switch">
+        <i class="switch"></i>
+      </label>
+      <label class="row">
+        <span class="row-text">
+          <b>Cópia limpa no Scribd</b>
+          <small>Copia texto puro e legível em scribd.com.</small>
+        </span>
+        <input type="checkbox" id="scribd" role="switch">
         <i class="switch"></i>
       </label>
     </section>

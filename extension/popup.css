@@ -30,13 +30,13 @@
 html {
   width: 380px;
   height: 600px;
-  overflow: hidden;
+  overflow: clip;
 }
 
 body {
   width: 380px;
   height: 600px;
-  overflow: hidden;
+  overflow: clip;
   display: flex;
   flex-direction: column;
   background: var(--bg-base);
@@ -50,7 +50,7 @@ body {
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  overflow: hidden;
+  overflow: clip;
 }
 .view.active {
   display: flex;
@@ -160,25 +160,15 @@ h1 {
   font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
 }
 
-/* ── Master toggle (prominent card) ── */
-.master {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  margin: 6px 16px 8px;
-  background: var(--bg-elevated);
-  border: 1.5px solid var(--accent);
-  box-shadow: 0 0 0 1px var(--accent-dim);
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: all 0.2s;
+/* ── Master toggle wrapper ── */
+.master-wrap {
   flex-shrink: 0;
+  padding: 6px 16px 8px;
+  overflow-y: hidden;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
 }
-.master:hover {
-  background: var(--bg-hover);
-  box-shadow: 0 0 0 2px var(--accent-dim);
-}
+.master-wrap .row { margin: 0; }
 
 /* ── Options list (scrollable cards) ── */
 .options-list {
@@ -188,11 +178,13 @@ h1 {
   overflow-x: hidden;
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
+  scrollbar-gutter: stable;
   padding: 4px 16px;
 }
 
 /* ── Option buttons / card rows ── */
 .row {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -229,6 +221,9 @@ h1 {
 /* ── Switch (toggle) ── */
 .row input[type="checkbox"] {
   position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
   width: 1px;
   height: 1px;
   clip-path: inset(50%);

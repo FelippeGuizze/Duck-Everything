@@ -10,7 +10,7 @@ async function install(settings) {
     if(existing.length) await browser.scripting.unregisterContentScripts({ids:[id]});
     return;
   }
-  const js = ['seed.js', ...Object.keys(defaults).filter(k=>k!=='enabled' && !settings[k]).map(k=>'off/'+k+'.js'), 'core.js'];
+  const js = ['seed.js', ...Object.keys(defaults).filter(k=>k!=='enabled' && !settings[k]).map(k=>'off/'+k+'.js'), 'scribd.js', 'core.js'];
   const spec = {id, matches:['<all_urls>'], js, allFrames:true, runAt:'document_start', world:'MAIN', persistAcrossSessions:true};
   if (existing.length) await browser.scripting.updateContentScripts([spec]);
   else await browser.scripting.registerContentScripts([spec]);
