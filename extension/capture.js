@@ -15,7 +15,6 @@ function captureError(error){
   if(/access denied|permission/i.test(raw))return 'O Firefox recusou o salvamento. Confira as permissões da extensão e tente novamente.';
   return raw.replace(/data:[^\s]+/gi,'[imagem omitida]').replace(/blob:[^\s]+/gi,'[arquivo temporário]').slice(0,220);
 }
-// Nome do arquivo: só a data e hora locais da captura, ex.: 2026-10-22_14-35-08.png
 function captureStamp(d=new Date()){
   const p=n=>String(n).padStart(2,'0');
   return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'_'+p(d.getHours())+'-'+p(d.getMinutes())+'-'+p(d.getSeconds());
@@ -34,13 +33,12 @@ async function captureSite(tabId, saveAs=true) {
     if(!png.startsWith('data:image/png;base64,'))throw new Error('O navegador não retornou um PNG.');
     const bytes=Uint8Array.from(atob(png.slice(png.indexOf(',')+1)),c=>c.charCodeAt(0));
     objectUrl=URL.createObjectURL(new Blob([bytes],{type:'image/png'}));
+    // O Chrome não aceita a opção `incognito` na API de downloads — omitimos ela nos dois.
     const downloadId=await browser.downloads.download({
       url:objectUrl,filename:captureStamp()+'.png',saveAs:saveAs!==false,conflictAction:'uniquify',
-      ...(tab.incognito ? {incognito:true} : {})
     });
     captureDownloads.set(downloadId,objectUrl);
     objectUrl=undefined;
-    // The download may finish before its Promise resolves; reconcile this race.
     try {
       const [item]=await browser.downloads.search({id:downloadId});
       if(item && ['complete','interrupted'].includes(item.state))releaseCapture(downloadId);

@@ -49,6 +49,13 @@ const buttons = [
 ];
 const busy = value => buttons.forEach(b => b.disabled = value);
 
+/* ── Comunicação com o background com retry para o Chrome ──
+   No Chrome, o service worker pode não estar ativo ainda quando o popup
+   abre. Tentamos até 4 vezes com 300 ms de intervalo antes de desistir. */
+function sendMessage(msg) {
+  return browser.runtime.sendMessage(msg);
+}
+
 /* ── Show active tab URL in footer with www detection ── */
 browser.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
   const el = document.getElementById('footer-url');
@@ -83,14 +90,13 @@ async function save(reload) {
     const settings = Object.fromEntries(
       keys.map(k => [k, document.getElementById(k).checked])
     );
-    await browser.runtime.sendMessage({ type: 'save', settings });
+    await sendMessage({ type: 'save', settings });
     status.textContent = 'Salvo. Recarregue as abas abertas para aplicar.';
     if (reload) {
       const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
       if (tab?.id !== undefined) await browser.tabs.reload(tab.id);
       status.textContent = 'Salvo. Recarregamento solicitado para esta aba.';
     }
-    // Fechar menu automaticamente após salvar
     setTimeout(() => window.close(), 250);
   } catch (e) {
     status.textContent = 'Não foi possível concluir: ' + errorText(e);
@@ -116,8 +122,7 @@ async function takeCapture(saveAs) {
     const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
     if (!Number.isInteger(tab?.id)) throw new Error('Nenhuma aba disponível.');
     status.textContent = 'Preparando PNG da área visível…';
-    browser.runtime.sendMessage({ type: 'capture', tabId: tab.id, saveAs });
-    // Fechar menu automaticamente após iniciar a captura
+    sendMessage({ type: 'capture', tabId: tab.id, saveAs });
     setTimeout(() => window.close(), 250);
   } catch (e) {
     status.textContent = 'Captura não concluída: ' + errorText(e);
@@ -130,12 +135,13 @@ document.getElementById('capture-quick').onclick = () => takeCapture(false);
 
 /* ── Load settings ── */
 busy(true);
-browser.runtime.sendMessage({ type: 'get' }).then(({ settings }) => {
+sendMessage({ type: 'get' }).then(({ settings }) => {
   show(settings);
   status.textContent = 'Salve para aplicar nas próximas páginas.';
   busy(false);
 }).catch(e => {
   status.textContent = 'Falha ao carregar: ' + errorText(e);
+  busy(false);
 });
 
 /* ═══════════════════════════════════════════════════════
