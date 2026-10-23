@@ -6,11 +6,7 @@ function serial(task) { const next = queue.then(task); queue = next.catch(()=>{}
 async function install(settings) {
   const id = 'duck-main';
   const existing = await browser.scripting.getRegisteredContentScripts({ids:[id]});
-  if (!settings.enabled) {
-    if(existing.length) await browser.scripting.unregisterContentScripts({ids:[id]});
-    return;
-  }
-  const js = ['seed.js', ...Object.keys(defaults).filter(k=>k!=='enabled' && !settings[k]).map(k=>'off/'+k+'.js'), 'scribd.js', 'core.js'];
+  const js = ['seed.js', ...Object.keys(defaults).filter(k=>!settings[k]).map(k=>'off/'+k+'.js'), 'scribd.js', 'core.js'];
   const spec = {id, matches:['<all_urls>'], js, allFrames:true, runAt:'document_start', world:'MAIN', persistAcrossSessions:true};
   if (existing.length) await browser.scripting.updateContentScripts([spec]);
   else await browser.scripting.registerContentScripts([spec]);
