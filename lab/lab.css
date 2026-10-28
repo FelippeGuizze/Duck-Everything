@@ -293,3 +293,25 @@ pre#log {
   word-break: break-all;
   scrollbar-width: thin;
 }
+
+/* ── Testes de seleção, Absolute e Voltar ── */
+.result {
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.result.ok   { color: var(--green);  border-color: var(--green);  background: var(--green-dim); }
+.result.warn { color: var(--yellow); border-color: var(--yellow); background: var(--yellow-dim); }
+.drag-row { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-muted); }
+.drag-row img { border-radius: 10px; flex: none; }
+.dnd { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.dnd-item, .dnd-zone {
+  padding: 12px; border-radius: 6px; font-size: 12px; text-align: center;
+  border: 1px dashed var(--border);
+}
+.dnd-item { background: var(--yellow-dim); color: var(--yellow); border-color: var(--yellow); cursor: grab; }
+.dnd-zone { color: var(--text-muted); }
+code { font-family: monospace; font-size: 11px; color: var(--accent-hover); }

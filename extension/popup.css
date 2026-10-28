@@ -564,3 +564,14 @@ input[type="color"] {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
+
+/* ── Estado da extensão na aba atual ── */
+.page-state {
+  flex: none;
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.page-state::before { content: "● "; }
+.page-state[data-state="on"]  { color: #48c774; }
+.page-state[data-state="off"] { color: #ffb822; }

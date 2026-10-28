@@ -40,7 +40,20 @@ if (typeof browser === 'undefined') {
     runtime: {
       get id() { return chrome.runtime.id; },
       sendMessage,
-      onMessage: chrome.runtime.onMessage,
+      // O Chrome ignora Promise retornada pelo listener; responde via sendResponse.
+      onMessage: {
+        addListener(fn) {
+          chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+            let out;
+            try { out = fn(message, sender); } catch (e) { sendResponse({ error: String(e?.message || e) }); return false; }
+            if (out && typeof out.then === 'function') {
+              out.then(sendResponse, e => sendResponse({ error: String(e?.message || e) }));
+              return true;
+            }
+            return false;
+          });
+        },
+      },
     },
     storage: {
       local: {
@@ -50,6 +63,7 @@ if (typeof browser === 'undefined') {
     },
     scripting: {
       getRegisteredContentScripts: (...a) => p(chrome.scripting, 'getRegisteredContentScripts', ...a),
+      executeScript:               (...a) => p(chrome.scripting, 'executeScript',               ...a),
       registerContentScripts:      (...a) => p(chrome.scripting, 'registerContentScripts',      ...a),
       updateContentScripts:        (...a) => p(chrome.scripting, 'updateContentScripts',         ...a),
       unregisterContentScripts:    (...a) => p(chrome.scripting, 'unregisterContentScripts',     ...a),

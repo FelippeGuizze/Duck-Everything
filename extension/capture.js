@@ -12,7 +12,7 @@ browser.downloads.onChanged.addListener(delta=>{
 function captureError(error){
   const raw=String(error?.message||error||'Erro desconhecido');
   if(/cancel/i.test(raw))return 'Salvamento cancelado. Você pode tentar novamente.';
-  if(/access denied|permission/i.test(raw))return 'O Firefox recusou o salvamento. Confira as permissões da extensão e tente novamente.';
+  if(/access denied|permission/i.test(raw))return 'O navegador recusou o salvamento. Confira as permissões da extensão e tente novamente.';
   return raw.replace(/data:[^\s]+/gi,'[imagem omitida]').replace(/blob:[^\s]+/gi,'[arquivo temporário]').slice(0,220);
 }
 function captureStamp(d=new Date()){
@@ -32,12 +32,14 @@ async function captureSite(tabId, saveAs=true) {
     if(current?.id!==tab.id || current.url!==tab.url)throw new Error('A aba mudou durante a captura. Tente novamente.');
     if(!png.startsWith('data:image/png;base64,'))throw new Error('O navegador não retornou um PNG.');
     const bytes=Uint8Array.from(atob(png.slice(png.indexOf(',')+1)),c=>c.charCodeAt(0));
-    objectUrl=URL.createObjectURL(new Blob([bytes],{type:'image/png'}));
+    // Service worker do Chrome não tem URL.createObjectURL; usa o data URL direto.
+    if(typeof URL.createObjectURL==='function')objectUrl=URL.createObjectURL(new Blob([bytes],{type:'image/png'}));
+    const downloadUrl=objectUrl||png;
     // O Chrome não aceita a opção `incognito` na API de downloads — omitimos ela nos dois.
     const downloadId=await browser.downloads.download({
-      url:objectUrl,filename:captureStamp()+'.png',saveAs:saveAs!==false,conflictAction:'uniquify',
+      url:downloadUrl,filename:captureStamp()+'.png',saveAs:saveAs!==false,conflictAction:'uniquify',
     });
-    captureDownloads.set(downloadId,objectUrl);
+    if(objectUrl)captureDownloads.set(downloadId,objectUrl);
     objectUrl=undefined;
     try {
       const [item]=await browser.downloads.search({id:downloadId});

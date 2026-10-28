@@ -84,6 +84,32 @@ browser.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
   }
 }).catch(() => {});
 
+/* ── A extensão está ativa nesta aba? ──
+   Só vale para páginas abertas DEPOIS de instalar/salvar: o navegador injeta o
+   script em navegações novas. O core.js sempre troca Event.prototype.preventDefault
+   por uma função anônima; a original se chama "preventDefault". */
+const pageState = document.getElementById('page-state');
+function setPageState(state, text, title) {
+  pageState.dataset.state = state;
+  pageState.textContent = text;
+  pageState.title = title;
+}
+browser.tabs.query({ active: true, currentWindow: true }).then(async ([tab]) => {
+  if (!tab || !/^(https?|file):/i.test(tab.url || '')) {
+    return setPageState('na', 'indisponível', 'O navegador não permite extensões nesta página (ex.: chrome://, about:, loja de extensões).');
+  }
+  try {
+    const [res] = await browser.scripting.executeScript({
+      target: { tabId: tab.id }, world: 'MAIN',
+      func: () => Event.prototype.preventDefault.name !== 'preventDefault'
+    });
+    if (res && res.result) setPageState('on', 'ativa nesta aba', 'O Duck Everything já está rodando nesta página.');
+    else setPageState('off', 'recarregue a aba', 'A extensão ainda não rodou nesta aba. Recarregue a página (F5). Se continuar assim, confira "Acesso ao site" nos detalhes da extensão.');
+  } catch {
+    setPageState('na', 'sem acesso', 'A extensão não tem permissão para esta página. Nos detalhes da extensão, defina "Acesso ao site" como "Em todos os sites" (e permita URLs de arquivo se for file://).');
+  }
+}).catch(() => {});
+
 /* ── Show settings ── */
 function show(s) {
   keys.forEach(k => {
@@ -117,7 +143,7 @@ document.getElementById('save').onclick = () => save(false);
 document.getElementById('reload').onclick = () => save(true);
 document.getElementById('reset').onclick = () => {
   show(globalThis.DUCK_DEFAULTS);
-  status.textContent = 'Tudo selecionado. Clique em Salvar para aplicar.';
+  status.textContent = 'Padrão restaurado. Clique em Salvar para aplicar.';
 };
 document.getElementById('disable-all').onclick = () => {
   show(Object.fromEntries(keys.map(k => [k, false])));

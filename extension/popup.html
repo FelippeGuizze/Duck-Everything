@@ -36,95 +36,95 @@
     </div>
 
     <section class="options-list">
-      <label class="row">
+      <label class="row" title="Área de transferência. O site continua vendo o evento, mas não consegue cancelar a cópia ou o recorte. Cobre também Ctrl+C e Ctrl+X.">
         <span class="row-text">
           <b>Copiar e recortar</b>
-          <small>Preserva a cópia e o recorte nativos.</small>
+          <small>Impede o site de bloquear Ctrl+C, Ctrl+X e o menu copiar.</small>
         </span>
         <input type="checkbox" id="copy" role="switch">
         <i class="switch"></i>
       </label>
-      <label class="row">
+      <label class="row" title="Área de transferência. Libera a colagem em campos que bloqueiam Ctrl+V. Em editores ricos o site pode perder recursos próprios de colar (ex.: imagem).">
         <span class="row-text">
           <b>Colar</b>
-          <small>Libera eventos de colagem.</small>
+          <small>Impede o site de bloquear Ctrl+V e o menu colar (campos de resposta).</small>
         </span>
         <input type="checkbox" id="paste" role="switch">
         <i class="switch"></i>
       </label>
-      <label class="row">
+      <label class="row" title="Mouse. O site deixa de receber o evento de menu de contexto. Menus próprios do site (Drive, Figma) não abrem.">
         <span class="row-text">
           <b>Botão direito</b>
-          <small>Restaura o menu do navegador.</small>
+          <small>Mantém o menu do navegador, mesmo que o site tente bloqueá-lo.</small>
         </span>
         <input type="checkbox" id="context" role="switch">
         <i class="switch"></i>
       </label>
-      <label class="row">
+      <label class="row" title="Mouse. Força seleção de texto e libera o arrastar de texto, imagens e links. Itens arrastáveis do próprio site (listas, kanban) continuam funcionando.">
         <span class="row-text">
           <b>Selecionar e arrastar</b>
-          <small>Força seleção de texto por CSS.</small>
+          <small>Deixa marcar texto e arrastar imagens/links onde o site proíbe.</small>
         </span>
         <input type="checkbox" id="selection" role="switch">
         <i class="switch"></i>
       </label>
-      <label class="row">
-        <span class="row-text">
-          <b>Modo Absolute</b>
-          <small>Interceptação forte; pode afetar sites interativos.</small>
-        </span>
-        <input type="checkbox" id="absolute" role="switch">
-        <i class="switch"></i>
-      </label>
-      <label class="row">
+      <label class="row" title="Teclado. Atalhos do navegador voltam a funcionar. Ctrl+C/X/V são controlados pelas opções de copiar e colar.">
         <span class="row-text">
           <b>Atalhos do teclado</b>
-          <small>Libera F5, F11, F12, Esc e atalhos Ctrl/Cmd.</small>
+          <small>Impede o site de bloquear F5, F11, F12, Esc e Ctrl+R/U/I.</small>
         </span>
         <input type="checkbox" id="shortcuts" role="switch">
         <i class="switch"></i>
       </label>
-      <label class="row">
+      <label class="row" title="Tela. Responde &quot;sucesso&quot; ao pedido de tela cheia sem ampliar nada. Botões de tela cheia de players de vídeo deixam de ampliar.">
         <span class="row-text">
           <b>Antifullscreen</b>
-          <small>Simula sucesso sem ampliar a janela.</small>
+          <small>O site acha que está em tela cheia, mas a janela não muda.</small>
         </span>
         <input type="checkbox" id="fullscreen" role="switch">
         <i class="switch"></i>
       </label>
-      <label class="row">
+      <label class="row" title="Tela. Trocar de aba ou janela não é detectado pelo site (visibilityState, hasFocus, blur).">
         <span class="row-text">
           <b>Simular foco e visibilidade</b>
-          <small>Informa página visível e com foco.</small>
+          <small>O site sempre vê a aba como visível e em foco.</small>
         </span>
         <input type="checkbox" id="focus" role="switch">
         <i class="switch"></i>
       </label>
-      <label class="row">
+      <label class="row" title="Tela. Nega Keyboard Lock e Pointer Lock. Jogos e visualizadores 3D que usam o mouse travado podem parar.">
         <span class="row-text">
-          <b>Liberar botão Voltar</b>
-          <small>Impede handlers de popstate da página.</small>
-        </span>
-        <input type="checkbox" id="history" role="switch">
-        <i class="switch"></i>
-      </label>
-      <label class="row">
-        <span class="row-text">
-          <b>Bloquear captura de teclado/mouse</b>
-          <small>Nega Keyboard Lock e Pointer Lock.</small>
+          <b>Negar trava de teclado e mouse</b>
+          <small>O site não consegue prender o teclado ou o ponteiro.</small>
         </span>
         <input type="checkbox" id="locks" role="switch">
         <i class="switch"></i>
       </label>
-      <label class="row">
+      <label class="row" title="Navegação. Só ignora o site &quot;re-empurrando&quot; o histórico depois de Voltar. Raramente necessário; deixe desligado se o Voltar já funciona.">
+        <span class="row-text">
+          <b>Armadilha do botão Voltar</b>
+          <small>Impede o site de te manter preso ao clicar em Voltar.</small>
+        </span>
+        <input type="checkbox" id="history" role="switch">
+        <i class="switch"></i>
+      </label>
+      <label class="row" title="Avisos. Pop-ups de alert() não aparecem nem travam a página.">
         <span class="row-text">
           <b>Silenciar alertas JavaScript</b>
-          <small>Silencia alert(); mantém confirm() e prompt().</small>
+          <small>Silencia alert(); confirm() e prompt() continuam.</small>
         </span>
         <input type="checkbox" id="alerts" role="switch">
         <i class="switch"></i>
       </label>
-      <label class="row">
+      <label class="row" title="Avançado. O site nem fica sabendo que essas teclas e botões foram usados. Não libera nada sozinho: serve para sites que punem ou detectam. Cliques normais e digitação não são afetados.">
+        <span class="row-text">
+          <b>Modo Absolute</b>
+          <small>Esconde do site o botão direito/meio e teclas como F5, F12, Ctrl+C.</small>
+        </span>
+        <input type="checkbox" id="absolute" role="switch">
+        <i class="switch"></i>
+      </label>
+      <label class="row" title="Site específico. Só age em scribd.com.">
         <span class="row-text">
           <b>Cópia limpa no Scribd</b>
           <small>Copia texto puro e legível em scribd.com.</small>
@@ -146,7 +146,7 @@
       </div>
 
       <div class="bulk-actions">
-        <button id="reset" class="subtle">Ativar todas as opções</button>
+        <button id="reset" class="subtle">Restaurar padrão</button>
         <button id="disable-all" class="subtle">Desativar todas as opções</button>
       </div>
 
@@ -154,6 +154,7 @@
         <div class="separator thin"></div>
         <div class="footer-bar">
           <span class="footer-url" id="footer-url">—</span>
+          <span class="page-state" id="page-state" role="status"></span>
           <div class="footer-icons">
             <button id="btn-settings-footer" class="icon-btn-gear" title="Configurações">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -258,6 +259,10 @@
       <div class="info-row">
         <span>Autor</span>
         <span class="info-value">uniedit</span>
+      </div>
+      <div class="info-row">
+        <span>Laboratório de testes</span>
+        <a class="info-value" href="http://127.0.0.1:8765" target="_blank" rel="noopener" title="Abra iniciar-windows.bat (ou python serve.py) antes">127.0.0.1:8765</a>
       </div>
     </div>
   </div>

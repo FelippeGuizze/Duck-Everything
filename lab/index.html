@@ -115,12 +115,83 @@
         <div class="card-header">
           <span class="card-title">🛡️ Travas, Histórico & Alertas</span>
         </div>
-        <p class="card-desc">Testa rejeição de Pointer Lock, Keyboard Lock, proteção contra traps de botão Voltar e silenciamento de alert().</p>
+        <p class="card-desc">Opções: Negar trava de teclado e mouse, Silenciar alertas. Testa a rejeição de Pointer Lock / Keyboard Lock e o silenciamento de alert().</p>
         <div class="btn-group">
           <button id="btn-test-locks">Testar Keyboard / Pointer Lock</button>
-          <button id="btn-test-history">Testar Botão Voltar (popstate)</button>
           <button id="btn-test-alert">Testar alert()</button>
         </div>
+      </div>
+
+      <!-- 7. Selecionar e arrastar -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🖱️ Selecionar e arrastar</span>
+        </div>
+        <p class="card-desc">Opção: <strong>Selecionar e arrastar</strong>. Ligada, você consegue marcar o texto protegido e arrastar a imagem. O item laranja é um arrastar-e-soltar legítimo do "site": precisa funcionar <em>sempre</em>, com a opção ligada ou não.</p>
+        <div class="protected-box nosel" id="sel-protected" onselectstart="return false" onmousedown="return false">
+          🔒 Tente marcar este texto com o mouse (user-select: none + onmousedown/onselectstart bloqueados).
+        </div>
+        <div class="drag-row">
+          <img id="drag-img" ondragstart="return false" alt="pato" width="44" height="44"
+               src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect width='44' height='44' rx='10' fill='%23f5c518'/%3E%3Ccircle cx='22' cy='22' r='9' fill='%231e1f24'/%3E%3C/svg%3E">
+          <span>Imagem com <code>ondragstart</code> bloqueado. Arraste-a até o campo abaixo.</span>
+        </div>
+        <input type="text" id="drop-field" placeholder="Solte a imagem ou um texto marcado aqui">
+        <div class="result" id="sel-readout">Selecionado: 0 caracteres</div>
+        <div class="dnd">
+          <div id="dnd-item" class="dnd-item" draggable="true">⠿ Item arrastável do site</div>
+          <div id="dnd-zone" class="dnd-zone">Solte aqui</div>
+        </div>
+        <div class="result" id="dnd-result">Arrastar-e-soltar do site: ainda não testado</div>
+        <div class="btn-group">
+          <button id="btn-test-selection">Testar eventos de seleção (automático)</button>
+        </div>
+      </div>
+
+      <!-- 8. Modo Absolute -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🕵️ Modo Absolute</span>
+        </div>
+        <p class="card-desc">Opção: <strong>Modo Absolute</strong>. Abaixo há um "site espião" que conta o que consegue ver. Com a opção <strong>ligada</strong>, botão direito/meio e teclas protegidas (<kbd>F12</kbd>, <kbd>Ctrl+C</kbd>, <kbd>Ctrl+V</kbd>, <kbd>Esc</kbd>…) ficam em <strong>0</strong>, enquanto clique normal e digitação continuam contando e o botão e o campo abaixo funcionam.</p>
+        <div class="status-grid">
+          <div class="status-item"><span class="status-label">Cliques esquerdos vistos</span><span id="spy-left" class="status-badge badge-on">0</span></div>
+          <div class="status-item"><span class="status-label">Direito/meio vistos</span><span id="spy-other" class="status-badge badge-on">0</span></div>
+          <div class="status-item"><span class="status-label">Teclas normais vistas</span><span id="spy-keys" class="status-badge badge-on">0</span></div>
+          <div class="status-item"><span class="status-label">Teclas protegidas vistas</span><span id="spy-prot" class="status-badge badge-on">0</span></div>
+        </div>
+        <div class="drag-row">
+          <button id="abs-button">Botão de teste</button>
+          <span id="abs-button-count">0 cliques (tem que subir sempre)</span>
+        </div>
+        <input type="text" id="abs-input" placeholder="Digite e aperte Enter (tem que funcionar sempre)">
+        <div class="result" id="abs-input-count">Enter registrado: 0 vezes</div>
+        <div class="protected-box" id="abs-pad" style="user-select:text;color:var(--text-main);border-color:var(--border)">Clique com o botão direito ou do meio aqui, e use as teclas protegidas com o foco nesta página.</div>
+        <div class="result" id="abs-verdict">Você ainda não usou o botão direito/meio.</div>
+      </div>
+
+      <!-- 9. Botão Voltar -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">↩️ Botão Voltar</span>
+        </div>
+        <p class="card-desc">Opção: <strong>Armadilha do botão Voltar</strong>. A <em>armadilha</em> imita um site que te prende ao clicar em Voltar. O <em>roteador</em> imita um app de página única (GitHub, por exemplo) que precisa do evento de Voltar para trocar de tela. Com a opção ligada: armadilha falha <strong>e</strong> o roteador continua funcionando.</p>
+        <div class="btn-group">
+          <button id="trap-arm" class="primary">Armar armadilha</button>
+          <button id="trap-disarm">Desarmar</button>
+        </div>
+        <div class="result" id="trap-status">Armadilha desarmada.</div>
+        <div class="btn-group">
+          <button id="route-1">Rota 1</button>
+          <button id="route-2">Rota 2</button>
+          <button id="route-3">Rota 3</button>
+        </div>
+        <div class="result" id="route-status">Tela atual: início · popstate recebidos pelo roteador: 0</div>
+        <div class="btn-group">
+          <button id="btn-test-trap">Testar armadilha (automático)</button>
+          <button id="btn-test-router">Testar roteador (automático)</button>
+        </div>
+        <div class="result" id="history-result">Use os botões automáticos, ou arme a armadilha e clique em Voltar no navegador.</div>
       </div>
 
     </div>
@@ -157,9 +228,15 @@
     // 3. Bloqueio de Seleção e Arrastar
     ['selectstart', 'dragstart'].forEach(function(type) {
       document.addEventListener(type, function(e) {
+        // Um site real não bloqueia o próprio arrastar-e-soltar.
+        if (e.target.closest && e.target.closest('[draggable="true"]')) return;
         e.preventDefault();
       }, false);
     });
+    // 3b. Anti-seleção por mousedown (área .nosel)
+    document.addEventListener('mousedown', function(e) {
+      if (e.target.closest && e.target.closest('.nosel')) e.preventDefault();
+    }, false);
 
     // 4. Bloqueio de Teclas de Atalho (Teclado)
     document.addEventListener('keydown', function(e) {
@@ -173,13 +250,13 @@
       if (e.key === 'Escape' || e.key === 'Esc') e.preventDefault();
     }, false);
 
-    // 5. Armadilha de Histórico
-    try {
-      history.pushState({ page: 1 }, '', location.href);
-      window.addEventListener('popstate', function() {
-        history.pushState({ page: 1 }, '', location.href);
-      });
-    } catch (e) {}
+    // 5. Armadilha de Histórico: só liga ao clicar em "Armar armadilha" (cartão Botão Voltar)
+    window.__trap = { armed: false, reacted: 0 };
+    window.addEventListener('popstate', function() {
+      if (!window.__trap.armed) return;
+      window.__trap.reacted++;
+      history.pushState({ trap: true }, '', location.href);
+    });
 
     // 6. Monitoramento de Foco / Troca de Aba
     window.__hostileTabEscapes = 0;
@@ -491,5 +568,111 @@
 
     })();
   </script>
+
+  <!-- SCRIPT DO LABORATÓRIO: testes de seleção, Absolute e Voltar -->
+  <script>
+    (function() {
+      var $ = function(id) { return document.getElementById(id); };
+      function log(cat, msg) {
+        var el = $('log'); if (!el) return;
+        var d = new Date(), p = function(n, w) { return String(n).padStart(w || 2, '0'); };
+        el.textContent += '[' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()) + '.' + p(d.getMilliseconds(), 3) + '] [' + cat + '] ' + msg + '\n';
+        el.scrollTop = el.scrollHeight;
+      }
+      function set(id, text, cls) { var el = $(id); if (!el) return; el.textContent = text; if (cls !== undefined) el.className = 'result ' + cls; }
+
+      // ── Selecionar e arrastar ──
+      document.addEventListener('selectionchange', function() {
+        set('sel-readout', 'Selecionado: ' + String(window.getSelection()).length + ' caracteres');
+      });
+      var dndStarts = 0;
+      $('dnd-item').addEventListener('dragstart', function(e) {
+        dndStarts++; e.dataTransfer.setData('text/plain', 'item-do-site');
+        set('dnd-result', 'Arrastar-e-soltar do site: arrastando… (dragstart visto ' + dndStarts + 'x)');
+      });
+      $('dnd-zone').addEventListener('dragover', function(e) { e.preventDefault(); });
+      $('dnd-zone').addEventListener('drop', function(e) {
+        e.preventDefault();
+        set('dnd-result', 'Arrastar-e-soltar do site: ✅ funcionou (soltou "' + e.dataTransfer.getData('text/plain') + '")', 'ok');
+        log('ARRASTAR', 'Drop legítimo do site recebido.');
+      });
+      $('btn-test-selection').onclick = function() {
+        var box = $('sel-protected');
+        ['selectstart', 'dragstart'].forEach(function(type) {
+          var e = new Event(type, { bubbles: true, cancelable: true });
+          box.dispatchEvent(e);
+          log('SELEÇÃO', type + ': ' + (e.defaultPrevented ? '❌ Bloqueado pelo site' : '✅ Liberado'));
+        });
+        var m = new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 });
+        box.dispatchEvent(m);
+        log('SELEÇÃO', 'mousedown (anti-seleção): ' + (m.defaultPrevented ? '❌ Bloqueado pelo site' : '✅ Liberado'));
+      };
+
+      // ── Modo Absolute: o "site espião" ──
+      var spy = { left: 0, other: 0, keys: 0, prot: 0 }, real = { other: 0 }, enters = 0, btnClicks = 0;
+      function isProtected(e) {
+        var k = (e.key || '').toLowerCase(), m = e.ctrlKey || e.metaKey;
+        return ['f5', 'f11', 'f12', 'escape'].indexOf(k) > -1 || (m && ['c', 'x', 'v', 'r', 'u', 'i'].indexOf(k) > -1);
+      }
+      function refresh() {
+        set('spy-left', spy.left); set('spy-other', spy.other); set('spy-keys', spy.keys); set('spy-prot', spy.prot);
+        ['spy-other', 'spy-prot'].forEach(function(id) { $(id).className = 'status-badge ' + (Number($(id).textContent) > 0 ? 'badge-warn' : 'badge-on'); });
+        if (real.other === 0) set('abs-verdict', 'Você ainda não usou o botão direito/meio.', '');
+        else if (spy.other === 0) set('abs-verdict', '✅ Você clicou ' + real.other + 'x com direito/meio e o site não viu nenhum (Modo Absolute ativo).', 'ok');
+        else set('abs-verdict', '👀 Você clicou ' + real.other + 'x com direito/meio e o site viu ' + spy.other + ' (Modo Absolute desligado).', 'warn');
+      }
+      // pointerdown não é tocado pela extensão: serve de "verdade" do que você realmente fez.
+      window.addEventListener('pointerdown', function(e) { if (e.button !== 0) { real.other++; refresh(); } }, true);
+      window.addEventListener('mousedown', function(e) { if (e.button === 0) spy.left++; else spy.other++; refresh(); }, true);
+      window.addEventListener('keydown', function(e) { if (isProtected(e)) spy.prot++; else spy.keys++; refresh(); }, true);
+      $('abs-button').onclick = function() { btnClicks++; set('abs-button-count', btnClicks + ' cliques (tem que subir sempre)'); };
+      $('abs-input').addEventListener('keydown', function(e) { if (e.key === 'Enter') { enters++; set('abs-input-count', 'Enter registrado: ' + enters + ' vezes'); } });
+      refresh();
+
+      // ── Botão Voltar ──
+      function arm(on) {
+        window.__trap.armed = on;
+        set('trap-status', on ? 'Armadilha ARMADA. Clique em Voltar no navegador. Reações: ' + window.__trap.reacted : 'Armadilha desarmada.');
+      }
+      $('trap-arm').onclick = function() { history.pushState({ trap: true }, '', location.href); arm(true); log('VOLTAR', 'Armadilha armada.'); };
+      $('trap-disarm').onclick = function() { arm(false); };
+      window.addEventListener('popstate', function() {
+        if (window.__trap.armed) set('trap-status', 'Armadilha ARMADA. Reações: ' + window.__trap.reacted + ' · entradas no histórico: ' + history.length);
+      });
+      var screenName = 'início', pops = 0;
+      function render() { set('route-status', 'Tela atual: ' + screenName + ' · popstate recebidos pelo roteador: ' + pops); }
+      [1, 2, 3].forEach(function(n) {
+        $('route-' + n).onclick = function() { screenName = 'rota ' + n; history.pushState({ route: n }, '', '#/rota-' + n); render(); };
+      });
+      // Roteador de SPA: troca de tela a partir do popstate (como o GitHub/Turbo fazem).
+      window.addEventListener('popstate', function(e) {
+        pops++; screenName = e.state && e.state.route ? 'rota ' + e.state.route : 'início'; render();
+      });
+      $('btn-test-trap').onclick = function() {
+        arm(true);
+        // replaceState não é bloqueado; se depois do popstate o estado virar {trap:true}, a armadilha empurrou o histórico.
+        history.replaceState({ probe: true }, '', location.href);
+        window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
+        setTimeout(function() {
+          var grew = !!(history.state && history.state.trap);
+          arm(false);
+          set('history-result', grew ? '❌ A armadilha empurrou o histórico (opção desligada).' : '✅ A armadilha não conseguiu prender o histórico.', grew ? 'warn' : 'ok');
+          log('VOLTAR', 'Teste da armadilha: ' + (grew ? 'prendeu' : 'bloqueada'));
+        }, 60);
+      };
+      $('btn-test-router').onclick = function() {
+        var seen = pops;
+        history.pushState({ route: 1 }, '', '#/rota-1'); screenName = 'rota 1';
+        history.pushState({ route: 2 }, '', '#/rota-2'); screenName = 'rota 2'; render();
+        history.back();
+        setTimeout(function() {
+          var okay = pops > seen && screenName === 'rota 1';
+          set('history-result', okay ? '✅ O roteador recebeu o Voltar e trocou de tela.' : '❌ O Voltar foi engolido: a URL mudou, mas a tela ficou em "' + screenName + '" (igual ao bug do GitHub).', okay ? 'ok' : 'warn');
+          log('VOLTAR', 'Teste do roteador: ' + (okay ? 'ok' : 'FALHOU'));
+        }, 150);
+      };
+    })();
+  </script>
 </body>
+
 </html>
