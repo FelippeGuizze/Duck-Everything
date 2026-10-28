@@ -315,3 +315,5 @@ pre#log {
 .dnd-item { background: var(--yellow-dim); color: var(--yellow); border-color: var(--yellow); cursor: grab; }
 .dnd-zone { color: var(--text-muted); }
 code { font-family: monospace; font-size: 11px; color: var(--accent-hover); }
+
+.console-actions { display: flex; gap: 8px; }

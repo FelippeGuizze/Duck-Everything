@@ -36,20 +36,12 @@
     </div>
 
     <section class="options-list">
-      <label class="row" title="Área de transferência. O site continua vendo o evento, mas não consegue cancelar a cópia ou o recorte. Cobre também Ctrl+C e Ctrl+X.">
+      <label class="row" title="Área de transferência. O site continua vendo o evento, mas não consegue cancelar a cópia, o recorte nem a colagem (útil em campos de resposta). Em editores ricos o site pode perder recursos próprios de colar (ex.: imagem).">
         <span class="row-text">
-          <b>Copiar e recortar</b>
-          <small>Impede o site de bloquear Ctrl+C, Ctrl+X e o menu copiar.</small>
+          <b>Copiar, recortar e colar</b>
+          <small>Impede o site de bloquear Ctrl+C, Ctrl+X, Ctrl+V e os menus copiar/colar.</small>
         </span>
-        <input type="checkbox" id="copy" role="switch">
-        <i class="switch"></i>
-      </label>
-      <label class="row" title="Área de transferência. Libera a colagem em campos que bloqueiam Ctrl+V. Em editores ricos o site pode perder recursos próprios de colar (ex.: imagem).">
-        <span class="row-text">
-          <b>Colar</b>
-          <small>Impede o site de bloquear Ctrl+V e o menu colar (campos de resposta).</small>
-        </span>
-        <input type="checkbox" id="paste" role="switch">
+        <input type="checkbox" id="clipboard" role="switch">
         <i class="switch"></i>
       </label>
       <label class="row" title="Mouse. O site deixa de receber o evento de menu de contexto. Menus próprios do site (Drive, Figma) não abrem.">
@@ -68,12 +60,20 @@
         <input type="checkbox" id="selection" role="switch">
         <i class="switch"></i>
       </label>
-      <label class="row" title="Teclado. Atalhos do navegador voltam a funcionar. Ctrl+C/X/V são controlados pelas opções de copiar e colar.">
+      <label class="row" title="Teclado. Atalhos do navegador voltam a funcionar. Ctrl+C/X/V são controlados pela opção de copiar e colar.">
         <span class="row-text">
           <b>Atalhos do teclado</b>
           <small>Impede o site de bloquear F5, F11, F12, Esc e Ctrl+R/U/I.</small>
         </span>
         <input type="checkbox" id="shortcuts" role="switch">
+        <i class="switch"></i>
+      </label>
+      <label class="row" title="Teclado. Esconde do site WASD, Alt, setas, atalhos… Digitar e apertar Enter dentro de campos de texto continua normal (e, lá dentro, o site ainda vê o que você digita). Apps com atalhos de teclado e jogos deixam de responder.">
+        <span class="row-text">
+          <b>Esconder teclas</b>
+          <small>O site não vê as teclas que você aperta fora de campos de texto.</small>
+        </span>
+        <input type="checkbox" id="keys" role="switch">
         <i class="switch"></i>
       </label>
       <label class="row" title="Tela. Responde &quot;sucesso&quot; ao pedido de tela cheia sem ampliar nada. Botões de tela cheia de players de vídeo deixam de ampliar.">
@@ -84,7 +84,7 @@
         <input type="checkbox" id="fullscreen" role="switch">
         <i class="switch"></i>
       </label>
-      <label class="row" title="Tela. Trocar de aba ou janela não é detectado pelo site (visibilityState, hasFocus, blur).">
+      <label class="row" title="Tela. Trocar de aba ou janela não é detectado pelo site (visibilityState, hasFocus, blur e focus da janela). O foco entre botões e campos continua normal.">
         <span class="row-text">
           <b>Simular foco e visibilidade</b>
           <small>O site sempre vê a aba como visível e em foco.</small>
@@ -116,7 +116,7 @@
         <input type="checkbox" id="alerts" role="switch">
         <i class="switch"></i>
       </label>
-      <label class="row" title="Avançado. O site nem fica sabendo que essas teclas e botões foram usados. Não libera nada sozinho: serve para sites que punem ou detectam. Cliques normais e digitação não são afetados.">
+      <label class="row" title="Avançado. Esconde do site o botão direito/meio e as teclas protegidas (F5, F12, Esc, Ctrl/Meta e Ctrl+C/X/V/R/U/I), até dentro de campos de texto. Letras comuns só somem com "Esconder teclas". Não libera nada sozinho: serve para sites que punem ou detectam. Cliques normais e digitação não são afetados.">
         <span class="row-text">
           <b>Modo Absolute</b>
           <small>Esconde do site o botão direito/meio e teclas como F5, F12, Ctrl+C.</small>

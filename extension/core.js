@@ -5,12 +5,13 @@
   if (!cfg) return;
   /*
     Regra geral: cada opção só mexe no próprio assunto.
-      - "Liberar" (copy, paste, context, selection, shortcuts): o site continua
+      - "Liberar" (clipboard, context, selection, shortcuts): o site continua
         recebendo os eventos, mas preventDefault() deixa de funcionar neles.
         Handlers inline (`onpaste="return false"`) não passam por preventDefault,
         então nesses casos o evento é escondido do site.
-      - "Esconder" (absolute): o site deixa de ver botão direito/meio e as teclas
-        protegidas. Não libera nada sozinho.
+      - "Esconder" (absolute, keys): absolute faz o site deixar de ver botão direito/meio
+        e as teclas protegidas; keys faz o site deixar de ver as teclas fora de campos
+        de texto. Não liberam nada sozinhas.
       - "Simular" (fullscreen, focus) e "Negar" (history, locks, alerts) não
         dependem de nenhuma outra opção.
   */
@@ -43,17 +44,19 @@
   const isKey=t=>t==='keydown'||t==='keyup'||t==='keypress';
   const keyOf=e=>(e.key||'').toLowerCase();
   const mod=e=>e.ctrlKey||e.metaKey;
-  // Ctrl+C/X pertencem a "copy", Ctrl+V a "paste"; o resto à "shortcuts".
-  const clipboardOwner=e=>!mod(e)?null:(['c','x'].includes(keyOf(e))?'copy':keyOf(e)==='v'?'paste':null);
+  // Ctrl+C/X/V pertencem a "clipboard"; o resto à "shortcuts".
+  const clipboardKey=e=>mod(e)&&['c','x','v'].includes(keyOf(e));
+  // Campo onde se digita: aqui "keys" não esconde nada, senão ninguém conseguiria escrever.
+  const TEXT_FIELD='textarea,[contenteditable]:not([contenteditable="false"]),[role=textbox],input:not([type]),input[type=text],input[type=search],input[type=email],input[type=url],input[type=tel],input[type=password],input[type=number]';
+  const typing=t=>{const el=asElement(t);try{return !!(el&&el.closest&&el.closest(TEXT_FIELD));}catch{return false;}};
   const shortcut=e=>['f5','f11','f12','escape'].includes(keyOf(e))||(mod(e)&&['r','u','i'].includes(keyOf(e)));
-  const keyUnlocked=e=>{const o=clipboardOwner(e);return o?cfg[o]:cfg.shortcuts&&shortcut(e);};
-  const keyProtected=e=>!!clipboardOwner(e)||shortcut(e);
+  const keyUnlocked=e=>clipboardKey(e)?cfg.clipboard:cfg.shortcuts&&shortcut(e);
+  const keyProtected=e=>clipboardKey(e)||shortcut(e)||['control','meta'].includes(keyOf(e));
 
   // O site não consegue mais cancelar a ação.
   const uncancelable=e=>{
     const t=e.type;
-    if(t==='copy'||t==='cut')return cfg.copy;
-    if(t==='paste')return cfg.paste;
+    if(t==='copy'||t==='cut'||t==='paste')return cfg.clipboard;
     if(t==='contextmenu')return cfg.context;
     if(t==='select'||t==='selectstart')return cfg.selection;
     if(t==='dragstart'||t==='drag')return cfg.selection&&!draggable(e.target);
@@ -65,12 +68,11 @@
   // O site nem fica sabendo que o evento aconteceu.
   const hidden=e=>{
     const t=e.type;
-    if(t==='copy'||t==='cut')return cfg.copy;
-    if(t==='paste')return cfg.paste;
+    if(t==='copy'||t==='cut'||t==='paste')return cfg.clipboard;
     if(t==='contextmenu')return cfg.context;
     if(t==='select'||t==='selectstart')return cfg.selection;
     if(t==='dragstart'||t==='drag')return cfg.selection&&!draggable(e.target);
-    if(isKey(t))return (cfg.absolute&&keyProtected(e))||(keyUnlocked(e)&&inlineHandler(e));
+    if(isKey(t))return (cfg.absolute&&keyProtected(e))||(cfg.keys&&!typing(e.target))||(keyUnlocked(e)&&inlineHandler(e));
     if(t==='mousedown'||t==='mouseup'||t==='auxclick'){
       if(cfg.absolute&&e.button!==0)return true;
       return t==='mousedown'&&uncancelable(e)&&inlineHandler(e);
@@ -111,12 +113,27 @@
     for(const k of ['webkitFullscreenElement','mozFullScreenElement'])if(k in Document.prototype)define(Document.prototype,k,{get:()=>active?.isConnected?active:null});
   }
   if(cfg.focus){
+    const nativeHasFocus=Document.prototype.hasFocus;
     define(Document.prototype,'hidden',{get:()=>false});
     define(Document.prototype,'visibilityState',{get:()=>'visible'});
     define(Document.prototype,'hasFocus',{get:()=>()=>true});
-    // Só o blur da própria janela e o visibilitychange somem. focus/focusin/focusout
-    // dos elementos seguem normais (menus, modais e foco de teclado dependem deles).
-    on(window,'blur',e=>{if(e.target===window)stop.call(e);});
+    // Some o que entrega a troca de janela/aba: blur/focus da janela, visibilitychange e o
+    // foco dos ELEMENTOS que acompanha essa troca. O foco normal entre elementos (menus,
+    // modais, campos) continua intacto.
+    //  - O Firefox entrega o blur/focus da janela com alvo `document`; o Chrome usa `window`.
+    //  - Ao SAIR, o blur/focusout do elemento ativo chega antes do da janela, mas com
+    //    hasFocus() já falso (clique entre botões nunca tem isso).
+    //  - Ao VOLTAR, o focus da janela chega primeiro e o do elemento logo depois.
+    const windowLevel=e=>e.target===window||e.target===document;
+    let quietUntil=0;
+    for(const type of ['blur','focus','focusin','focusout'])on(window,type,e=>{
+      if((type==='blur'||type==='focus')&&windowLevel(e)){
+        if(type==='focus'&&e.isTrusted)quietUntil=Date.now()+200; // só a troca real de janela, não focus sintético
+        stop.call(e);return;
+      }
+      // Só no frame principal: dentro de iframes o foco sai de forma normal sem trocar de janela.
+      if(window===window.top&&(Date.now()<quietUntil||!nativeHasFocus.call(document)))stop.call(e);
+    });
     on(window,'visibilitychange',e=>stop.call(e));
   }
   if(cfg.history&&typeof History!=='undefined'){

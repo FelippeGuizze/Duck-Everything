@@ -25,7 +25,8 @@ const MODES={
   padrao:code('seed.js')+code('core.js'),
   absolute:code('seed.js')+';globalThis.__duck_boot_config__.absolute=true;'+code('core.js'),
   voltar:code('seed.js')+';Object.assign(globalThis.__duck_boot_config__,{absolute:false,history:true});'+code('core.js'),
-  tudo:code('seed.js')+';Object.assign(globalThis.__duck_boot_config__,{absolute:true,history:true});'+code('core.js'),
+  teclas:code('seed.js')+';globalThis.__duck_boot_config__.keys=true;'+code('core.js'),
+  tudo:code('seed.js')+';Object.assign(globalThis.__duck_boot_config__,{absolute:true,history:true,keys:true});'+code('core.js'),
 };
 let checks=0;const eq=(a,b,msg)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw new Error(msg+': obtido '+JSON.stringify(a)+', esperado '+JSON.stringify(b));checks++;};
 
@@ -41,6 +42,7 @@ let checks=0;const eq=(a,b,msg)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw
       const t=await (await fetch('http://127.0.0.1:9333/json/new?about:blank',{method:'PUT'})).json();
       const cdp=await connect(t.webSocketDebuggerUrl);
       await cdp.send('Page.enable');
+      await cdp.send('Emulation.setFocusEmulationEnabled',{enabled:true}); // janela "com foco", como no uso real
       await cdp.send('Emulation.setDeviceMetricsOverride',{width:1300,height:3200,deviceScaleFactor:1,mobile:false});
       if(inject)await cdp.send('Page.addScriptToEvaluateOnNewDocument',{source:inject});
       await cdp.send('Page.navigate',{url:base+'/lab/'});
@@ -52,7 +54,7 @@ let checks=0;const eq=(a,b,msg)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw
       const mouse=(type,x,y,button='left',extra={})=>cdp.send('Input.dispatchMouseEvent',{type,x,y,button,buttons:button==='left'?1:button==='right'?2:4,clickCount:1,...extra});
       const click=async(sel,button='left')=>{const [x,y]=await center(sel);await mouse('mouseMoved',x,y,'none');await mouse('mousePressed',x,y,button);await mouse('mouseReleased',x,y,button);await sleep(60);};
       const key=async(k,o={})=>{await cdp.send('Input.dispatchKeyEvent',{type:o.text?'keyDown':'rawKeyDown',key:k,code:o.code||k,windowsVirtualKeyCode:o.vk,modifiers:o.mod||0,text:o.text});await cdp.send('Input.dispatchKeyEvent',{type:'keyUp',key:k,code:o.code||k,windowsVirtualKeyCode:o.vk,modifiers:o.mod||0});await sleep(40);};
-      const active=mode!=='off',abs=mode==='absolute'||mode==='tudo',hist=mode==='voltar'||mode==='tudo';
+      const active=mode!=='off',abs=mode==='absolute'||mode==='tudo',hist=mode==='voltar'||mode==='tudo',keysOn=mode==='teclas'||mode==='tudo';
 
       // ── 1. Uso normal precisa continuar funcionando em TODOS os modos (bug do "botão não clica") ──
       await click('#abs-button');await click('#abs-button');
@@ -68,7 +70,13 @@ let checks=0;const eq=(a,b,msg)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw
       await click('#abs-pad','right');await click('#abs-pad','middle');
       eq(await text('#spy-other'),abs?'0':'2',`[${mode}] direito/meio vistos pelo site`);
       await key('F12',{code:'F12',vk:123});await key('c',{code:'KeyC',vk:67,mod:2});
-      eq(await text('#spy-prot'),abs?'0':'2',`[${mode}] teclas protegidas vistas pelo site`);
+      eq(await text('#spy-prot'),(abs||keysOn)?'0':'2',`[${mode}] teclas protegidas vistas pelo site`);
+      // Esconder teclas: tecla comum fora de campo de texto some; dentro do campo (já testado acima) continua
+      await ev("document.activeElement&&document.activeElement.blur()");
+      await key('q',{text:'q',code:'KeyQ',vk:81});await key('Alt',{code:'AltLeft',vk:18,mod:1});
+      eq(await text('#spy-keys'),keysOn?'3':'5',`[${mode}] teclas fora de campo de texto`);
+      await click('#abs-input');await key('z',{text:'z',code:'KeyZ',vk:90});
+      eq(await text('#spy-keys'),keysOn?'4':'6',`[${mode}] teclas dentro de campo de texto continuam`);
       eq((await text('#abs-verdict')).startsWith(abs?'✅':'👀'),true,`[${mode}] veredito do lab`);
 
       // ── 3. Voltar: roteador de SPA nunca pode quebrar (bug do GitHub); armadilha só falha com a opção ──
@@ -91,6 +99,21 @@ let checks=0;const eq=(a,b,msg)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw
       eq(await ev(`(()=>{const e=new DragEvent('dragstart',{bubbles:true,cancelable:true});document.getElementById('drag-img').dispatchEvent(e);return e.defaultPrevented})()`),!active,`[${mode}] dragstart da imagem`);
       await ev(`document.getElementById('dnd-item').dispatchEvent(new DragEvent('dragstart',{bubbles:true,cancelable:true,dataTransfer:new DataTransfer()}))`);
       eq((await text('#dnd-result')).includes('dragstart visto 1x'),true,`[${mode}] arrastar-e-soltar do próprio site continua`);
+      // ── 5. Foco: a janela não pode ser detectada, o foco entre elementos continua normal ──
+      await ev(`window.__w=0;window.__el=0;window.addEventListener('blur',e=>{e.target===window?window.__w++:window.__el++},true);window.addEventListener('focus',e=>{e.target===window?window.__w++:window.__el++},true)`);
+      await ev(`window.dispatchEvent(new Event('blur'));window.dispatchEvent(new Event('focus'))`);
+      eq(await ev('window.__w'),active?0:2,`[${mode}] blur/focus da janela vistos pelo site`);
+      await ev(`document.getElementById('abs-input').focus();document.getElementById('abs-button').focus()`);
+      eq(await ev('window.__el>0'),true,`[${mode}] foco entre elementos continua`);
+      // ── 6. Botões de copiar do lab ──
+      await ev(`window.__labText='';navigator.clipboard.writeText=t=>{window.__labText=t;return Promise.resolve()}`);
+      await click('#btn-copy-log');await sleep(150);
+      eq((await ev('window.__labText')).includes('# Extensão ativa nesta página: '+(active?'sim':'NÃO')),true,`[${mode}] cabeçalho do log copiado`);
+      const opts=await ev('window.__labText');
+      for(const [k,v] of Object.entries({clipboard:active,keys:keysOn,context:active,selection:active,shortcuts:active,absolute:abs,fullscreen:active,focus:active,history:hist,locks:active,alerts:active}))
+        eq(opts.includes(k+'='+(v?'on':'off')),true,`[${mode}] diagnóstico do lab: ${k} deveria estar ${v?'on':'off'}`);
+      await click('#btn-copy-summary');await sleep(150);
+      eq(/# Resumo: \d+ linhas, \d+ diferentes/.test(await ev('window.__labText')),true,`[${mode}] resumo copiado`);
       console.log('  ok  '+mode);
       cdp.close();await fetch('http://127.0.0.1:9333/json/close/'+t.id);
     }

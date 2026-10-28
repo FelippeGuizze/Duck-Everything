@@ -11,7 +11,10 @@ async function install(settings) {
   if (existing.length) await browser.scripting.updateContentScripts([spec]);
   else await browser.scripting.registerContentScripts([spec]);
 }
-async function read() { return normalize((await browser.storage.local.get('settings')).settings); }
+// copy + paste viraram uma opção só (clipboard): quem tinha qualquer uma ligada continua ligada.
+const migrate = v => (v && typeof v.clipboard !== 'boolean' && (typeof v.copy === 'boolean' || typeof v.paste === 'boolean'))
+  ? { ...v, clipboard: (v.copy ?? true) || (v.paste ?? true) } : v;
+async function read() { return normalize(migrate((await browser.storage.local.get('settings')).settings)); }
 // Reconcile on background wake; registered scripts persist across sessions.
 serial(async()=>install(await read())).catch(()=>{});
 browser.runtime.onMessage.addListener((message,sender)=>{

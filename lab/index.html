@@ -68,6 +68,7 @@
         <div class="btn-group">
           <button id="btn-check-shortcuts" class="primary">▶ Testar atalhos sintéticos</button>
         </div>
+        <p class="card-desc">Este monitor mostra o que o <em>site</em> consegue ver. O <strong>Modo Absolute</strong> faz desaparecer daqui <kbd>F5</kbd>, <kbd>F11</kbd>, <kbd>F12</kbd>, <kbd>Esc</kbd>, <kbd>Ctrl</kbd>/<kbd>Meta</kbd> e <kbd>Ctrl</kbd>+<kbd>C/X/V/R/U/I</kbd>. Já <strong>Esconder teclas</strong> faz sumir as demais (letras, <kbd>Alt</kbd>, setas…) quando o foco <em>não</em> está num campo de texto: clique fora do campo abaixo e digite.</p>
         <input type="text" placeholder="Clique aqui e pressione QUALQUER tecla para testar o log real">
       </div>
 
@@ -153,7 +154,7 @@
         <div class="card-header">
           <span class="card-title">🕵️ Modo Absolute</span>
         </div>
-        <p class="card-desc">Opção: <strong>Modo Absolute</strong>. Abaixo há um "site espião" que conta o que consegue ver. Com a opção <strong>ligada</strong>, botão direito/meio e teclas protegidas (<kbd>F12</kbd>, <kbd>Ctrl+C</kbd>, <kbd>Ctrl+V</kbd>, <kbd>Esc</kbd>…) ficam em <strong>0</strong>, enquanto clique normal e digitação continuam contando e o botão e o campo abaixo funcionam.</p>
+        <p class="card-desc">Opção: <strong>Modo Absolute</strong> (teclas protegidas e botão direito/meio). Abaixo há um "site espião" que conta o que consegue ver. Com a opção <strong>ligada</strong>, botão direito/meio e teclas protegidas (<kbd>F12</kbd>, <kbd>Ctrl+C</kbd>, <kbd>Ctrl+V</kbd>, <kbd>Esc</kbd>…) ficam em <strong>0</strong>, enquanto clique normal e digitação continuam contando e o botão e o campo abaixo funcionam.</p>
         <div class="status-grid">
           <div class="status-item"><span class="status-label">Cliques esquerdos vistos</span><span id="spy-left" class="status-badge badge-on">0</span></div>
           <div class="status-item"><span class="status-label">Direito/meio vistos</span><span id="spy-other" class="status-badge badge-on">0</span></div>
@@ -200,7 +201,11 @@
     <div class="console-card">
       <div class="console-header">
         <h3><span class="dot"></span> Monitor de Eventos & Teclado em Tempo Real</h3>
-        <button id="btn-clear-log">Limpar Logs</button>
+        <div class="console-actions">
+          <button id="btn-copy-log" title="Copia o log completo, com cabeçalho do navegador">Copiar log</button>
+          <button id="btn-copy-summary" title="Copia uma linha por evento diferente, com contagem (×N)">Copiar resumo</button>
+          <button id="btn-clear-log">Limpar Logs</button>
+        </div>
       </div>
       <pre id="log"></pre>
     </div>
@@ -221,6 +226,7 @@
     // 2. Bloqueio de Eventos de Clipboard
     ['copy', 'cut', 'paste'].forEach(function(type) {
       document.addEventListener(type, function(e) {
+        if (window.__labCopying) return; // o botão "Copiar log" do próprio lab
         e.preventDefault();
       }, false);
     });
@@ -326,12 +332,19 @@
       }, true);
 
       // 3. MONITORAMENTO DE FOCO E VISIBILIDADE
-      window.addEventListener('blur', function() {
-        appendLog('FOCO', 'Evento "blur" recebido pela janela (perdeu foco)');
+      // Em modo captura, a janela também recebe o foco dos elementos (ex.: ao clicar de um botão
+      // para outro). Só os eventos "da JANELA" indicam que o usuário saiu da aba.
+      function focusWho(e) {
+        if (e.target === window || e.target === document) return 'da JANELA';
+        var t = e.target, name = t && t.tagName ? t.tagName.toLowerCase() + (t.id ? '#' + t.id : '') : '?';
+        return 'de elemento <' + name + '> (normal)';
+      }
+      window.addEventListener('blur', function(e) {
+        appendLog('FOCO', 'Evento "blur" ' + focusWho(e) + ' (perdeu foco)');
       }, true);
 
-      window.addEventListener('focus', function() {
-        appendLog('FOCO', 'Evento "focus" recebido pela janela (ganhou foco)');
+      window.addEventListener('focus', function(e) {
+        appendLog('FOCO', 'Evento "focus" ' + focusWho(e) + ' (ganhou foco)');
       }, true);
 
       document.addEventListener('visibilitychange', function() {
@@ -580,6 +593,95 @@
         el.scrollTop = el.scrollHeight;
       }
       function set(id, text, cls) { var el = $(id); if (!el) return; el.textContent = text; if (cls !== undefined) el.className = 'result ' + cls; }
+
+
+      // ── Copiar log / resumo ──
+      // Descobre, por comportamento, quais opções estão agindo nesta página (só para diagnóstico do lab).
+      function detectOptions() {
+        var nat = function(f) { try { return /\[native code\]/.test(Function.prototype.toString.call(f)); } catch (e) { return true; } };
+        var getter = function(proto, key) { var d = Object.getOwnPropertyDescriptor(proto, key); return d && d.get; };
+        var defused = function(make) { try { var e = make(); e.preventDefault(); return !e.defaultPrevented; } catch (x) { return false; } };
+        var key = function(k) { return new KeyboardEvent('keydown', { key: k, cancelable: true }); };
+        var hiddenF12 = (function() {
+          var seen = 0, h = function() { seen++; };
+          window.addEventListener('keyup', h, true);
+          ($('abs-input') || document).dispatchEvent(new KeyboardEvent('keyup', { key: 'F12', bubbles: true, cancelable: true }));
+          window.removeEventListener('keyup', h, true);
+          return seen === 0;
+        })();
+        // "Esconder teclas": uma tecla comum fora de campos de texto some do site.
+        var hiddenKeys = (function() {
+          var seen = 0, h = function() { seen++; };
+          window.addEventListener('keyup', h, true);
+          document.body.dispatchEvent(new KeyboardEvent('keyup', { key: 'q', bubbles: true, cancelable: true }));
+          window.removeEventListener('keyup', h, true);
+          return seen === 0;
+        })();
+        var o = {
+          clipboard: defused(function() { return new Event('paste', { cancelable: true }); }),
+          context: defused(function() { return new Event('contextmenu', { cancelable: true }); }),
+          selection: defused(function() { return new Event('selectstart', { cancelable: true }); }),
+          shortcuts: defused(function() { return key('F12'); }),
+          absolute: hiddenF12,
+          keys: hiddenKeys,
+          fullscreen: !nat(Element.prototype.requestFullscreen),
+          focus: !nat(getter(Document.prototype, 'hidden')),
+          history: typeof History !== 'undefined' && !nat(History.prototype.pushState),
+          locks: !!Element.prototype.requestPointerLock && !nat(Element.prototype.requestPointerLock),
+          alerts: !nat(window.alert)
+        };
+        return Object.keys(o).map(function(k) { return k + '=' + (o[k] ? 'on' : 'off'); }).join(' ');
+      }
+      function header() {
+        var active = false;
+        try { active = Event.prototype.preventDefault.name !== 'preventDefault'; } catch (e) {}
+        return [
+          '# Duck Everything — log do laboratório',
+          '# Navegador: ' + navigator.userAgent,
+          '# Extensão ativa nesta página: ' + (active ? 'sim (preventDefault substituído)' : 'NÃO detectada'),
+          '# Opções agindo (detectadas): ' + detectOptions(),
+          '# document.hidden=' + document.hidden + ' visibilityState=' + document.visibilityState + ' hasFocus=' + document.hasFocus(),
+          '# Gerado em: ' + new Date().toLocaleString()
+        ].join('\n');
+      }
+      // Uma linha por evento diferente (ignorando a hora), com ×N e primeira→última hora.
+      function summarize(text) {
+        var seen = {}, order = [], total = 0;
+        text.split('\n').forEach(function(line) {
+          if (!line.trim()) return;
+          total++;
+          var m = line.match(/^\[(\d\d:\d\d:\d\d\.\d{3})\]\s*(.*)$/), t = m ? m[1] : '', body = m ? m[2] : line;
+          var e = seen[body];
+          if (!e) { e = seen[body] = { body: body, first: t, last: t, n: 0 }; order.push(e); }
+          e.n++; e.last = t;
+        });
+        var lines = order.map(function(e) {
+          return '[' + e.first + (e.n > 1 ? '→' + e.last : '') + '] ' + (e.n > 1 ? '×' + e.n + ' ' : '') + e.body;
+        });
+        return '# Resumo: ' + total + ' linhas, ' + order.length + ' diferentes\n' + lines.join('\n');
+      }
+      function copyText(text, button) {
+        var label = button.textContent;
+        function done(ok) {
+          button.textContent = ok ? 'Copiado ✓' : 'Falhou — selecione o log e copie';
+          setTimeout(function() { button.textContent = label; }, 1800);
+        }
+        function fallback() {
+          var ta = document.createElement('textarea');
+          ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px;top:0';
+          document.body.appendChild(ta); ta.select();
+          window.__labCopying = true;
+          var ok = false;
+          try { ok = document.execCommand('copy'); } catch (e) {}
+          window.__labCopying = false; ta.remove(); done(ok);
+        }
+        window.__labCopying = true;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function() { window.__labCopying = false; done(true); }, function() { window.__labCopying = false; fallback(); });
+        } else { window.__labCopying = false; fallback(); }
+      }
+      $('btn-copy-log').onclick = function() { copyText(header() + '\n\n' + ($('log').textContent || '(vazio)'), this); };
+      $('btn-copy-summary').onclick = function() { copyText(header() + '\n\n' + summarize($('log').textContent || ''), this); };
 
       // ── Selecionar e arrastar ──
       document.addEventListener('selectionchange', function() {
