@@ -42,4 +42,14 @@ Abra `iniciar-windows.bat` (ou rode `python serve.py`) e acesse <http://127.0.0.
 ```
 node tests/unit.cjs     # lógica, com mocks
 node tests/chrome.cjs   # Chrome real; usa o Chrome instalado ou CHROME_PATH
+node tests/capture.cjs  # captura de tela, com mocks
 ```
+
+### Teste ao vivo no Firefox
+
+```
+node tests/firefox-live.cjs       # 40 ciclos
+node tests/firefox-live.cjs 100   # mais ciclos
+```
+
+Usa o Firefox instalado (ou `FIREFOX_PATH`), sem instalar nada: abre um Firefox invisível com perfil temporário, instala a pasta `extension/`, abre o popup numa aba e salva várias combinações de opções. Os saves vão ao vivo, com a aba recarregando, em sequência sem esperar a resposta e com o background hibernando. A cada passo confere se o lab ainda vê F12, botão direito/meio e teclas comuns conforme as opções. Precisa do Firefox 138 ou mais novo e da porta 9334 livre. Termina com `PASS` ou lista cada ciclo que falhou.

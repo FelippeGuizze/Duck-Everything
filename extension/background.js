@@ -31,7 +31,8 @@ async function read() { return normalize(migrate((await browser.storage.local.ge
 // Reconcile on background wake; registered scripts persist across sessions.
 serial(async()=>install(await read())).catch(()=>{});
 browser.runtime.onMessage.addListener((message,sender)=>{
-  if(sender.id !== browser.runtime.id || sender.tab) return;
+  // Só páginas da própria extensão (popup; ou popup.html aberto numa aba, como no tests/firefox-live.cjs).
+  if(sender.id !== browser.runtime.id || (sender.tab && !(sender.url && sender.url.startsWith(browser.runtime.getURL(''))))) return;
   if(message?.type==='shot') return captureShotReply(message.tabId);
   if(message?.type==='capture') return captureSite(message.tabId, message.saveAs!==false, message.png);
   if(message?.type==='get') return serial(async()=>{
