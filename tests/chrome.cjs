@@ -22,9 +22,9 @@ async function connect(url){
 }
 const MODES={
   off:'',
-  padrao:code('seed.js')+code('core.js'),
-  absolute:code('seed.js')+';globalThis.__duck_boot_config__.absolute=true;'+code('core.js'),
-  voltar:code('seed.js')+';Object.assign(globalThis.__duck_boot_config__,{absolute:false,history:true});'+code('core.js'),
+  padrao:code('seed.js')+';globalThis.__duck_boot_config__.keys=false;'+code('core.js'),
+  absolute:code('seed.js')+';Object.assign(globalThis.__duck_boot_config__,{absolute:true,keys:false});'+code('core.js'),
+  voltar:code('seed.js')+';Object.assign(globalThis.__duck_boot_config__,{absolute:false,history:true,keys:false});'+code('core.js'),
   teclas:code('seed.js')+';globalThis.__duck_boot_config__.keys=true;'+code('core.js'),
   tudo:code('seed.js')+';Object.assign(globalThis.__duck_boot_config__,{absolute:true,history:true,keys:true});'+code('core.js'),
 };
