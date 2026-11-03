@@ -69,6 +69,9 @@ let checks=0;const eq=(a,b,msg)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw
       // ── 2. Absolute esconde só botão direito/meio e teclas protegidas ──
       await click('#abs-pad','right');await click('#abs-pad','middle');
       eq(await text('#spy-other'),abs?'0':'2',`[${mode}] direito/meio vistos pelo site`);
+      eq(abs?await text('#spy-chan')==='0':Number(await text('#spy-chan'))>0,true,`[${mode}] direito/meio por pointer/contextmenu/movimento`);
+      {const [x,y]=await center('#abs-pad');await mouse('mousePressed',x,y,'right');await mouse('mouseMoved',x+5,y+5,'right');await mouse('mouseReleased',x+5,y+5,'right');await sleep(60);}
+      eq(abs?await text('#spy-chan')==='0':true,true,`[${mode}] arrastar com botão direito escondido`);
       await key('F12',{code:'F12',vk:123});await key('c',{code:'KeyC',vk:67,mod:2});
       eq(await text('#spy-prot'),(abs||keysOn)?'0':'2',`[${mode}] teclas protegidas vistas pelo site`);
       // Esconder teclas: tecla comum fora de campo de texto some; dentro do campo (já testado acima) continua

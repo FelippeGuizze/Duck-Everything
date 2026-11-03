@@ -72,6 +72,10 @@ await listener({type:'save',settings:{absolute:false,fullscreen:false}},{id:'tes
 await listener({type:'save',settings:Object.fromEntries(Object.keys(bg.DUCK_DEFAULTS).map(k=>[k,false]))},{id:'test'});eq(registry.length,1);eq(registry[0].js.filter(f=>f.startsWith('off/')).length,Object.keys(bg.DUCK_DEFAULTS).length);
 await listener({type:'save',settings:{absolute:true,keys:false,history:false}},{id:'test'});eq(registry[0].js.includes('on/absolute.js'),true);eq(registry[0].js.includes('off/keys.js'),true);eq(registry[0].js.includes('on/keys.js'),false);eq(bg.DUCK_DEFAULTS.keys,true);eq(registry[0].js.includes('off/absolute.js'),false);eq(registry[0].js.includes('on/history.js'),false);eq(registry[0].js.includes('on/clipboard.js'),false);
 eq(listener({type:'save',settings:{}},{id:'test',tab:{id:1}}),undefined);
+// Absolute esconde direito/meio em todos os canais (ponteiro, contextmenu, botão segurado no movimento); esquerdo passa.
+eq(delivered(abs,'pointerdown','button:2'),0);eq(delivered(abs,'pointerup','button:1'),0);eq(delivered(abs,'pointerdown','button:0'),1);
+eq(delivered(abs,'mousemove','button:0,buttons:2'),0);eq(delivered(abs,'pointermove','button:-1,buttons:4'),0);eq(delivered(abs,'mousemove','button:0,buttons:1'),1);eq(delivered(abs,'pointermove','button:-1,buttons:0'),1);
+eq(delivered(make(['context'],['absolute']),'contextmenu'),0);eq(delivered(make(['context']),'contextmenu'),1);eq(delivered(c,'pointerdown','button:2'),1);
 // Ao vivo: "Salvar" empurra opções sem recarregar; a mudança vale para o preventDefault seguinte.
 {const x=make(['clipboard']);const can=()=>run(x,"(()=>{const e=new Event('copy');e.preventDefault();return e.defaultPrevented})()");eq(can(),true);
 run(x,"globalThis.__duck_update__={clipboard:true,bogus:true}");eq(can(),false);

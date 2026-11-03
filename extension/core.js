@@ -65,18 +65,22 @@
     if(t==='mousedown')return cfg.selection&&e.button===0&&!interactive(e.target);
     return false;
   };
+  // Todo evento de mouse/ponteiro que entrega o botão direito/meio (ou voltar/avançar): no clique
+  // (button>0), segurando durante o movimento (buttons além do esquerdo) e o próprio contextmenu.
+  const MOUSE=['mousedown','mouseup','click','dblclick','auxclick','contextmenu','mousemove','mouseover','mouseout','mouseenter','mouseleave',
+    'pointerdown','pointerup','pointermove','pointerrawupdate','pointerover','pointerout','pointerenter','pointerleave','wheel'];
+  const MOUSE_SET=new Set(MOUSE);
+  const nonPrimary=e=>e.type==='contextmenu'||e.button>0||(e.buttons&~1)>0;
   // O site nem fica sabendo que o evento aconteceu.
   const hidden=e=>{
     const t=e.type;
+    if(cfg.absolute&&MOUSE_SET.has(t)&&nonPrimary(e))return true;
     if(t==='copy'||t==='cut'||t==='paste')return cfg.clipboard;
     if(t==='contextmenu')return cfg.context;
     if(t==='select'||t==='selectstart')return cfg.selection;
     if(t==='dragstart'||t==='drag')return cfg.selection&&!draggable(e.target);
     if(isKey(t))return (cfg.absolute&&keyProtected(e))||(cfg.keys&&!typing(e.target))||(keyUnlocked(e)&&inlineHandler(e));
-    if(t==='mousedown'||t==='mouseup'||t==='auxclick'){
-      if(cfg.absolute&&e.button!==0)return true;
-      return t==='mousedown'&&uncancelable(e)&&inlineHandler(e);
-    }
+    if(t==='mousedown')return uncancelable(e)&&inlineHandler(e);
     return false;
   };
 
@@ -84,7 +88,7 @@
     if(uncancelable(this))return;
     return prevent.call(this);
   });
-  const types=['copy','cut','paste','contextmenu','select','selectstart','drag','dragstart','mousedown','mouseup','auxclick','keydown','keyup','keypress'];
+  const types=[...new Set(['copy','cut','paste','select','selectstart','drag','dragstart','keydown','keyup','keypress',...MOUSE])];
   for(const type of types)on(window,type,e=>{if(hidden(e))stop.call(e);});
 
   // user-select liberado: o <style> entra e sai conforme cfg.selection (pode mudar ao vivo).
