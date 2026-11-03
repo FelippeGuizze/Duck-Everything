@@ -21,7 +21,7 @@ layoutButtons.forEach(b => b.addEventListener('click', () => {
 }));
 
 /* ═══════════════════════════════════════════════════════
-   Duck Everything — Popup Logic v2.2
+   Duck Everything — Popup Logic
    ═══════════════════════════════════════════════════════ */
 
 const keys = Object.keys(globalThis.DUCK_DEFAULTS);

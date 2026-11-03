@@ -5,7 +5,7 @@
 const {spawn}=require('node:child_process'),fs=require('node:fs'),path=require('node:path'),os=require('node:os'),http=require('node:http');
 const root=path.resolve(__dirname,'..');
 const FF=process.env.FIREFOX_PATH||({win32:'C:/Program Files/Mozilla Firefox/firefox.exe',darwin:'/Applications/Firefox.app/Contents/MacOS/firefox'})[process.platform]||'firefox';
-const ID='duck-everything@local.invalid',UUID='d0c0d0c0-0000-4000-8000-000000000001',PORT=9334;
+const ID='duck-everything@felippeguizze',UUID='d0c0d0c0-0000-4000-8000-000000000001',PORT=9334;
 const N=+process.argv[2]||40;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const prof=fs.mkdtempSync(path.join(os.tmpdir(),'duck-ff-'));
