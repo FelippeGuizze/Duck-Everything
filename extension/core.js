@@ -49,7 +49,10 @@
   // Campo onde se digita: aqui "keys" não esconde nada, senão ninguém conseguiria escrever.
   const TEXT_FIELD='textarea,[contenteditable]:not([contenteditable="false"]),[role=textbox],input:not([type]),input[type=text],input[type=search],input[type=email],input[type=url],input[type=tel],input[type=password],input[type=number]';
   const typing=t=>{const el=asElement(t);try{return !!(el&&el.closest&&el.closest(TEXT_FIELD));}catch{return false;}};
-  const shortcut=e=>['f5','f11','f12','escape'].includes(keyOf(e))||(mod(e)&&['r','u','i'].includes(keyOf(e)));
+  // Atalhos do DevTools com Shift (Ctrl+Shift+I/J/C/K/E/M) ou Option no Mac (Cmd+Opt+I/J/C): pelo código da tecla,
+  // porque com Option o e.key vira outro caractere.
+  const DEVTOOLS=['KeyI','KeyJ','KeyC','KeyK','KeyE','KeyM'];
+  const shortcut=e=>['f5','f11','f12','escape'].includes(keyOf(e))||(mod(e)&&['r','u','i'].includes(keyOf(e)))||(mod(e)&&(e.shiftKey||e.altKey)&&DEVTOOLS.includes(e.code));
   const keyUnlocked=e=>clipboardKey(e)?cfg.clipboard:cfg.shortcuts&&shortcut(e);
   const keyProtected=e=>clipboardKey(e)||shortcut(e)||['control','meta'].includes(keyOf(e));
 
@@ -65,18 +68,22 @@
     if(t==='mousedown')return cfg.selection&&e.button===0&&!interactive(e.target);
     return false;
   };
+  // Todo evento de mouse/ponteiro que entrega o botão direito/meio (ou voltar/avançar): no clique
+  // (button>0), segurando durante o movimento (buttons além do esquerdo) e o próprio contextmenu.
+  const MOUSE=['mousedown','mouseup','click','dblclick','auxclick','contextmenu','mousemove','mouseover','mouseout','mouseenter','mouseleave',
+    'pointerdown','pointerup','pointermove','pointerrawupdate','pointerover','pointerout','pointerenter','pointerleave','wheel'];
+  const MOUSE_SET=new Set(MOUSE);
+  const nonPrimary=e=>e.type==='contextmenu'||e.button>0||(e.buttons&~1)>0;
   // O site nem fica sabendo que o evento aconteceu.
   const hidden=e=>{
     const t=e.type;
+    if(cfg.absolute&&MOUSE_SET.has(t)&&nonPrimary(e))return true;
     if(t==='copy'||t==='cut'||t==='paste')return cfg.clipboard;
     if(t==='contextmenu')return cfg.context;
     if(t==='select'||t==='selectstart')return cfg.selection;
     if(t==='dragstart'||t==='drag')return cfg.selection&&!draggable(e.target);
     if(isKey(t))return (cfg.absolute&&keyProtected(e))||(cfg.keys&&!typing(e.target))||(keyUnlocked(e)&&inlineHandler(e));
-    if(t==='mousedown'||t==='mouseup'||t==='auxclick'){
-      if(cfg.absolute&&e.button!==0)return true;
-      return t==='mousedown'&&uncancelable(e)&&inlineHandler(e);
-    }
+    if(t==='mousedown')return uncancelable(e)&&inlineHandler(e);
     return false;
   };
 
@@ -84,7 +91,13 @@
     if(uncancelable(this))return;
     return prevent.call(this);
   });
-  const types=['copy','cut','paste','contextmenu','select','selectstart','drag','dragstart','mousedown','mouseup','auxclick','keydown','keyup','keypress'];
+  // `e.returnValue = false` é o preventDefault antigo e não passa pelo método acima.
+  const returnValue=Object.getOwnPropertyDescriptor(Event.prototype,'returnValue');
+  if(returnValue?.set)define(Event.prototype,'returnValue',{enumerable:returnValue.enumerable,get:returnValue.get,set(v){
+    if(!v&&uncancelable(this))return;
+    return returnValue.set.call(this,v);
+  }});
+  const types=[...new Set(['copy','cut','paste','select','selectstart','drag','dragstart','keydown','keyup','keypress',...MOUSE])];
   for(const type of types)on(window,type,e=>{if(hidden(e))stop.call(e);});
 
   // user-select liberado: o <style> entra e sai conforme cfg.selection (pode mudar ao vivo).
@@ -102,6 +115,9 @@
   // "Salvar" no popup empurra as opções que funcionam ao vivo (clipboard, context, selection,
   // shortcuts, absolute, keys, locks, alerts). As demais (fullscreen, focus, history, scribd)
   // instalam seus ganchos no carregamento e só mudam depois de recarregar a aba.
+  // Valores com que esta página carregou: o popup compara para saber se falta recarregar.
+  const boot={...cfg};
+  define(globalThis,'__duck_boot__',{get:()=>({...boot})});
   define(globalThis,'__duck_update__',{get:()=>undefined,set:update=>{
     if(!update||typeof update!=='object')return;
     for(const k of Object.keys(cfg))if(typeof update[k]==='boolean')cfg[k]=update[k];

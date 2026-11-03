@@ -158,6 +158,7 @@
         <div class="status-grid">
           <div class="status-item"><span class="status-label">Cliques esquerdos vistos</span><span id="spy-left" class="status-badge badge-on">0</span></div>
           <div class="status-item"><span class="status-label">Direito/meio vistos</span><span id="spy-other" class="status-badge badge-on">0</span></div>
+          <div class="status-item"><span class="status-label">Direito/meio por outros canais</span><span id="spy-chan" class="status-badge badge-on">0</span></div>
           <div class="status-item"><span class="status-label">Teclas normais vistas</span><span id="spy-keys" class="status-badge badge-on">0</span></div>
           <div class="status-item"><span class="status-label">Teclas protegidas vistas</span><span id="spy-prot" class="status-badge badge-on">0</span></div>
         </div>
@@ -168,7 +169,7 @@
         <input type="text" id="abs-input" placeholder="Digite e aperte Enter (tem que funcionar sempre)">
         <div class="result" id="abs-input-count">Enter registrado: 0 vezes</div>
         <div class="protected-box" id="abs-pad" style="user-select:text;color:var(--text-main);border-color:var(--border)">Clique com o botão direito ou do meio aqui, e use as teclas protegidas com o foco nesta página.</div>
-        <div class="result" id="abs-verdict">Você ainda não usou o botão direito/meio.</div>
+        <div class="result" id="abs-verdict">Você ainda não usou o mouse aqui.</div>
       </div>
 
       <!-- 9. Botão Voltar -->
@@ -204,7 +205,7 @@
         <div class="console-actions">
           <button id="btn-copy-log" title="Copia o log completo, com cabeçalho do navegador">Copiar log</button>
           <button id="btn-copy-summary" title="Copia uma linha por evento diferente, com contagem (×N)">Copiar resumo</button>
-          <button id="btn-clear-log">Limpar Logs</button>
+          <button id="btn-clear-log" class="danger">Limpar Logs</button>
         </div>
       </div>
       <pre id="log"></pre>
@@ -252,6 +253,9 @@
       if ((e.ctrlKey || e.metaKey) && key === 'v') e.preventDefault();
       if ((e.ctrlKey || e.metaKey) && key === 'u') e.preventDefault();
       if (e.key === 'F12' || ((e.ctrlKey || e.metaKey) && e.shiftKey && key === 'i')) e.preventDefault();
+      // Anti-DevTools: F12 também pelo jeito antigo (returnValue), e os atalhos Ctrl+Shift+J/K/C/E/M.
+      if (e.key === 'F12') e.returnValue = false;
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && ['KeyJ', 'KeyK', 'KeyC', 'KeyE', 'KeyM'].indexOf(e.code) > -1) e.returnValue = false;
       if (e.key === 'F11') e.preventDefault();
       if (e.key === 'Escape' || e.key === 'Esc') e.preventDefault();
     }, false);
@@ -312,7 +316,7 @@
         } catch (err) {
           console.error(err);
         }
-      }, true);
+      }, false); // na volta (bubble) da janela: o site já rodou os bloqueios e defaultPrevented mostra o resultado final
 
       // 2. MONITORAMENTO DE CLIPBOARD E MOUSE
       ['copy', 'cut', 'paste'].forEach(function(type) {
@@ -711,20 +715,26 @@
       };
 
       // ── Modo Absolute: o "site espião" ──
-      var spy = { left: 0, other: 0, keys: 0, prot: 0 }, real = { other: 0 }, enters = 0, btnClicks = 0;
+      var spy = { left: 0, other: 0, chan: 0, keys: 0, prot: 0 }, enters = 0, btnClicks = 0;
       function isProtected(e) {
         var k = (e.key || '').toLowerCase(), m = e.ctrlKey || e.metaKey;
         return ['f5', 'f11', 'f12', 'escape'].indexOf(k) > -1 || (m && ['c', 'x', 'v', 'r', 'u', 'i'].indexOf(k) > -1);
       }
       function refresh() {
-        set('spy-left', spy.left); set('spy-other', spy.other); set('spy-keys', spy.keys); set('spy-prot', spy.prot);
-        ['spy-other', 'spy-prot'].forEach(function(id) { $(id).className = 'status-badge ' + (Number($(id).textContent) > 0 ? 'badge-warn' : 'badge-on'); });
-        if (real.other === 0) set('abs-verdict', 'Você ainda não usou o botão direito/meio.', '');
-        else if (spy.other === 0) set('abs-verdict', '✅ Você clicou ' + real.other + 'x com direito/meio e o site não viu nenhum (Modo Absolute ativo).', 'ok');
-        else set('abs-verdict', '👀 Você clicou ' + real.other + 'x com direito/meio e o site viu ' + spy.other + ' (Modo Absolute desligado).', 'warn');
+        set('spy-left', spy.left); set('spy-other', spy.other); set('spy-chan', spy.chan); set('spy-keys', spy.keys); set('spy-prot', spy.prot);
+        ['spy-other', 'spy-chan', 'spy-prot'].forEach(function(id) { $(id).className = 'status-badge ' + (Number($(id).textContent) > 0 ? 'badge-warn' : 'badge-on'); });
+        var seen = spy.other + spy.chan;
+        if (seen > 0) set('abs-verdict', '👀 O site viu ' + seen + ' eventos de botão direito/meio (Modo Absolute desligado).', 'warn');
+        else if (spy.left > 0) set('abs-verdict', '✅ O site não viu nenhum botão direito/meio. Se você clicou com eles, o Modo Absolute escondeu.', 'ok');
+        else set('abs-verdict', 'Você ainda não usou o mouse aqui.', '');
       }
-      // pointerdown não é tocado pela extensão: serve de "verdade" do que você realmente fez.
-      window.addEventListener('pointerdown', function(e) { if (e.button !== 0) { real.other++; refresh(); } }, true);
+      // Outros jeitos de um site perceber direito/meio: ponteiro, menu de contexto, auxclick e botão segurado no movimento.
+      ['pointerdown', 'pointerup', 'auxclick', 'contextmenu'].forEach(function(type) {
+        window.addEventListener(type, function(e) { if (type === 'contextmenu' || e.button > 0) { spy.chan++; refresh(); } }, true);
+      });
+      ['mousemove', 'pointermove'].forEach(function(type) {
+        window.addEventListener(type, function(e) { if ((e.buttons & ~1) > 0) { spy.chan++; refresh(); } }, true);
+      });
       window.addEventListener('mousedown', function(e) { if (e.button === 0) spy.left++; else spy.other++; refresh(); }, true);
       window.addEventListener('keydown', function(e) { if (isProtected(e)) spy.prot++; else spy.keys++; refresh(); }, true);
       $('abs-button').onclick = function() { btnClicks++; set('abs-button-count', btnClicks + ' cliques (tem que subir sempre)'); };

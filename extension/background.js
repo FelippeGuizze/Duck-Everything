@@ -6,7 +6,9 @@ function serial(task) { const next = queue.then(task); queue = next.catch(()=>{}
 async function install(settings) {
   const id = 'duck-main';
   const existing = await browser.scripting.getRegisteredContentScripts({ids:[id]});
-  const js = ['seed.js', ...Object.keys(defaults).filter(k=>!settings[k]).map(k=>'off/'+k+'.js'), 'scribd.js', 'core.js'];
+  // seed.js traz os padrões: opção desligada pede off/<k>.js; ligada mas desligada por padrão pede on/<k>.js.
+  const keys = Object.keys(defaults);
+  const js = ['seed.js', ...keys.filter(k=>!settings[k]).map(k=>'off/'+k+'.js'), ...keys.filter(k=>settings[k]&&!defaults[k]).map(k=>'on/'+k+'.js'), 'scribd.js', 'core.js'];
   const spec = {id, matches:['<all_urls>'], js, allFrames:true, runAt:'document_start', world:'MAIN', persistAcrossSessions:true};
   if (existing.length) await browser.scripting.updateContentScripts([spec]);
   else await browser.scripting.registerContentScripts([spec]);
@@ -29,7 +31,8 @@ async function read() { return normalize(migrate((await browser.storage.local.ge
 // Reconcile on background wake; registered scripts persist across sessions.
 serial(async()=>install(await read())).catch(()=>{});
 browser.runtime.onMessage.addListener((message,sender)=>{
-  if(sender.id !== browser.runtime.id || sender.tab) return;
+  // Só páginas da própria extensão (popup; ou popup.html aberto numa aba, como no tests/firefox-live.cjs).
+  if(sender.id !== browser.runtime.id || (sender.tab && !(sender.url && sender.url.startsWith(browser.runtime.getURL(''))))) return;
   if(message?.type==='shot') return captureShotReply(message.tabId);
   if(message?.type==='capture') return captureSite(message.tabId, message.saveAs!==false, message.png);
   if(message?.type==='get') return serial(async()=>{

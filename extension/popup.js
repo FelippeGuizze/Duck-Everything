@@ -116,18 +116,40 @@ function show(s) {
     const el = document.getElementById(k);
     if (el) el.checked = s[k];
   });
+  updateReloadTags();
 }
 
 /* Opções ao vivo (DUCK_LIVE) valem na hora para as abas abertas; as outras pedem recarregar. */
 const live = new Set(globalThis.DUCK_LIVE);
 const labelOf = k => document.getElementById(k).closest('label').querySelector('b').textContent;
+// Ícone no canto da linha: aparece só enquanto a aba atual ainda roda com outro valor da opção.
+let tabBoot = null; // valores com que a aba carregou (null = não dá para saber)
+const reloadTags = new Map();
 keys.filter(k => !live.has(k)).forEach(k => {
   const tag = document.createElement('span');
   tag.className = 'reload-tag';
-  tag.textContent = '↻ recarrega a aba';
-  tag.title = 'Esta opção só muda depois de recarregar a aba.';
-  document.getElementById(k).closest('label').querySelector('b').append(tag);
+  tag.hidden = true;
+  tag.title = 'Precisa recarregar a aba para esta mudança valer.';
+  tag.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>';
+  const input = document.getElementById(k);
+  input.closest('label').querySelector('b').prepend(tag);
+  input.addEventListener('change', () => updateReloadTags());
+  reloadTags.set(k, tag);
 });
+function updateReloadTags() {
+  reloadTags.forEach((tag, k) => {
+    const running = typeof tabBoot?.[k] === 'boolean' ? tabBoot[k] : saved[k];
+    tag.hidden = document.getElementById(k).checked === running;
+  });
+}
+browser.tabs.query({ active: true, currentWindow: true }).then(async ([tab]) => {
+  if (!tab || !/^(https?|file):/i.test(tab.url || '')) return;
+  const [res] = await browser.scripting.executeScript({
+    target: { tabId: tab.id }, world: 'MAIN', func: () => globalThis.__duck_boot__ || null
+  });
+  tabBoot = res?.result || null;
+  updateReloadTags();
+}).catch(() => {});
 let saved = {};
 
 /* ── Save ── */
@@ -140,6 +162,7 @@ async function save(reload) {
     await sendMessage({ type: 'save', settings });
     const pending = keys.filter(k => !live.has(k) && settings[k] !== saved[k]);
     saved = settings;
+    updateReloadTags();
     if (reload) {
       const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
       if (tab?.id !== undefined) await browser.tabs.reload(tab.id);
@@ -216,6 +239,7 @@ busy(true);
 sendMessage({ type: 'get' }).then(({ settings }) => {
   show(settings);
   saved = settings;
+  updateReloadTags();
   status.textContent = 'Salvar aplica na hora; opções com ↻ pedem recarregar a aba.';
   busy(false);
 }).catch(e => {

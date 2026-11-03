@@ -1,1 +1,1 @@
-globalThis.__duck_boot_config__ = {"clipboard": true, "context": true, "selection": true, "absolute": false, "shortcuts": true, "keys": false, "fullscreen": true, "focus": true, "history": false, "locks": true, "alerts": true, "scribd": true};
+globalThis.__duck_boot_config__ = {"clipboard": true, "context": true, "selection": true, "absolute": false, "shortcuts": true, "keys": true, "fullscreen": true, "focus": true, "history": false, "locks": true, "alerts": true, "scribd": true};

@@ -39,6 +39,7 @@ if (typeof browser === 'undefined') {
   globalThis.browser = {
     runtime: {
       get id() { return chrome.runtime.id; },
+      getURL: path => chrome.runtime.getURL(path),
       sendMessage,
       // O Chrome ignora Promise retornada pelo listener; responde via sendResponse.
       onMessage: {

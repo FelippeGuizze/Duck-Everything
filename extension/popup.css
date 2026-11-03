@@ -597,9 +597,12 @@ input[type="color"] {
   opacity: 0;
 }
 .reload-tag {
-  font-size: 10px;
-  font-weight: 500;
+  display: inline-flex;
+  vertical-align: -2px;
+  margin-right: 5px;
   color: var(--text-secondary);
-  margin-left: 6px;
-  white-space: nowrap;
+  cursor: help;
 }
+.reload-tag svg { stroke-width: 2.5; }
+.row:hover .reload-tag { color: var(--text-primary); }
+.reload-tag[hidden] { display: none; }

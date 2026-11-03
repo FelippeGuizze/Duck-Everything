@@ -22,9 +22,9 @@ async function connect(url){
 }
 const MODES={
   off:'',
-  padrao:code('seed.js')+code('core.js'),
-  absolute:code('seed.js')+';globalThis.__duck_boot_config__.absolute=true;'+code('core.js'),
-  voltar:code('seed.js')+';Object.assign(globalThis.__duck_boot_config__,{absolute:false,history:true});'+code('core.js'),
+  padrao:code('seed.js')+';globalThis.__duck_boot_config__.keys=false;'+code('core.js'),
+  absolute:code('seed.js')+';Object.assign(globalThis.__duck_boot_config__,{absolute:true,keys:false});'+code('core.js'),
+  voltar:code('seed.js')+';Object.assign(globalThis.__duck_boot_config__,{absolute:false,history:true,keys:false});'+code('core.js'),
   teclas:code('seed.js')+';globalThis.__duck_boot_config__.keys=true;'+code('core.js'),
   tudo:code('seed.js')+';Object.assign(globalThis.__duck_boot_config__,{absolute:true,history:true,keys:true});'+code('core.js'),
 };
@@ -69,6 +69,9 @@ let checks=0;const eq=(a,b,msg)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw
       // ── 2. Absolute esconde só botão direito/meio e teclas protegidas ──
       await click('#abs-pad','right');await click('#abs-pad','middle');
       eq(await text('#spy-other'),abs?'0':'2',`[${mode}] direito/meio vistos pelo site`);
+      eq(abs?await text('#spy-chan')==='0':Number(await text('#spy-chan'))>0,true,`[${mode}] direito/meio por pointer/contextmenu/movimento`);
+      {const [x,y]=await center('#abs-pad');await mouse('mousePressed',x,y,'right');await mouse('mouseMoved',x+5,y+5,'right');await mouse('mouseReleased',x+5,y+5,'right');await sleep(60);}
+      eq(abs?await text('#spy-chan')==='0':true,true,`[${mode}] arrastar com botão direito escondido`);
       await key('F12',{code:'F12',vk:123});await key('c',{code:'KeyC',vk:67,mod:2});
       eq(await text('#spy-prot'),(abs||keysOn)?'0':'2',`[${mode}] teclas protegidas vistas pelo site`);
       // Esconder teclas: tecla comum fora de campo de texto some; dentro do campo (já testado acima) continua
@@ -78,6 +81,15 @@ let checks=0;const eq=(a,b,msg)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw
       await click('#abs-input');await key('z',{text:'z',code:'KeyZ',vk:90});
       eq(await text('#spy-keys'),keysOn?'4':'6',`[${mode}] teclas dentro de campo de texto continuam`);
       eq((await text('#abs-verdict')).startsWith(abs?'✅':'👀'),true,`[${mode}] veredito do lab`);
+      // Anti-DevTools: o lab bloqueia F12 (preventDefault + returnValue) e Ctrl+Shift+J (returnValue). Com a extensão, o bloqueio não pega.
+      if(!abs){
+        await click('#abs-input');
+        await key('F12',{code:'F12',vk:123});await key('J',{code:'KeyJ',vk:74,mod:10});
+        const lines=(await text('#log')).split(/\r?\n/);
+        const last=k=>lines.filter(l=>l.includes('Tecla: "'+k+'"')).pop()||'';
+        eq(last('F12').includes(active?'LIBERADO':'BLOQUEADO'),true,`[${mode}] F12 ${active?'liberado':'bloqueado pelo site'}`);
+        eq(last('J').includes(active?'LIBERADO':'BLOQUEADO'),true,`[${mode}] Ctrl+Shift+J ${active?'liberado':'bloqueado pelo site'}`);
+      }
 
       // ── 3. Voltar: roteador de SPA nunca pode quebrar (bug do GitHub); armadilha só falha com a opção ──
       await click('#btn-test-router');await sleep(350);

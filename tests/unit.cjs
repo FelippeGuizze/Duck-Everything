@@ -10,7 +10,7 @@ class Document extends EventTarget {createElement(){return new Element()}hasFocu
 const document=new Document();document.documentElement=new Element();class History{constructor(){this.pushed=0}pushState(){this.pushed++}forward(){this.pushed++}go(){this.pushed++}}
 const history=new History();const window=new EventTarget();
 Element.prototype.dispatchEvent=function(e){e.target=this;for(const f of window.handlers[e.type]||[]){f(e);if(e.stopped)return}for(const f of this.handlers[e.type]||[]){f(e);if(e.stopped)return}};
-document.dispatchEvent=function(e){e.target=this;for(const f of window.handlers[e.type]||[]){f(e);if(e.stopped)return}for(const f of this.handlers[e.type]||[]){f(e);if(e.stopped)return}};window.top=window;window.alert=()=>42;const navigator={keyboard:{lock:()=>Promise.resolve('native')}};`,c);vm.runInContext(code('seed.js'),c);for(const k of off)vm.runInContext(code('off/'+k+'.js'),c);for(const k of on)vm.runInContext('globalThis.__duck_boot_config__.'+k+'=true',c);vm.runInContext(code('core.js'),c);return c;}
+document.dispatchEvent=function(e){e.target=this;for(const f of window.handlers[e.type]||[]){f(e);if(e.stopped)return}for(const f of this.handlers[e.type]||[]){f(e);if(e.stopped)return}};window.top=window;window.alert=()=>42;const navigator={keyboard:{lock:()=>Promise.resolve('native')}};`,c);vm.runInContext(code('seed.js'),c);if(!on.includes('keys'))vm.runInContext(code('off/keys.js'),c);for(const k of off)vm.runInContext(code('off/'+k+'.js'),c);for(const k of on)vm.runInContext('globalThis.__duck_boot_config__.'+k+'=true',c);vm.runInContext(code('core.js'),c);return c;}
 const run=(c,s)=>vm.runInContext(s,c);
 (async()=>{
 let c=make();eq(run(c,'globalThis.__duck_boot_config__'),undefined);
@@ -62,7 +62,7 @@ eq(await run(make(['locks']),'navigator.keyboard.lock()'),'native');
 let registry=[],stored={},listener;
 const browser={runtime:{id:'test',onMessage:{addListener:f=>listener=f}},storage:{local:{get:async()=>stored,set:async x=>{stored=x}}},scripting:{getRegisteredContentScripts:async()=>registry,registerContentScripts:async x=>{registry=x},updateContentScripts:async x=>{registry=x},unregisterContentScripts:async()=>{registry=[]}}};
 const bg=vm.createContext({browser});vm.runInContext(code('defaults.js'),bg);vm.runInContext(code('background.js'),bg);
-let res=await listener({type:'get'},{id:'test'});eq(res.settings.absolute,false);eq(res.settings.history,false);eq(res.settings.clipboard,true);eq(res.settings.keys,false);eq(registry[0].world,'MAIN');eq(registry[0].matches[0],'<all_urls>');
+let res=await listener({type:'get'},{id:'test'});eq(res.settings.absolute,false);eq(res.settings.history,false);eq(res.settings.clipboard,true);eq(res.settings.keys,true);eq(registry[0].world,'MAIN');eq(registry[0].matches[0],'<all_urls>');
 // copy + paste viraram clipboard: quem tinha qualquer uma ligada continua ligada
 stored={settings:{copy:false,paste:true}};res=await listener({type:'get'},{id:'test'});eq(res.settings.clipboard,true);
 stored={settings:{copy:false,paste:false}};res=await listener({type:'get'},{id:'test'});eq(res.settings.clipboard,false);
@@ -70,7 +70,12 @@ stored={settings:{copy:false,paste:false,clipboard:true}};res=await listener({ty
 stored={};
 await listener({type:'save',settings:{absolute:false,fullscreen:false}},{id:'test'});eq(registry[0].js.includes('off/absolute.js'),true);eq(registry[0].js.includes('off/fullscreen.js'),true);eq(stored.settings.absolute,false);
 await listener({type:'save',settings:Object.fromEntries(Object.keys(bg.DUCK_DEFAULTS).map(k=>[k,false]))},{id:'test'});eq(registry.length,1);eq(registry[0].js.filter(f=>f.startsWith('off/')).length,Object.keys(bg.DUCK_DEFAULTS).length);
+await listener({type:'save',settings:{absolute:true,keys:false,history:false}},{id:'test'});eq(registry[0].js.includes('on/absolute.js'),true);eq(registry[0].js.includes('off/keys.js'),true);eq(registry[0].js.includes('on/keys.js'),false);eq(bg.DUCK_DEFAULTS.keys,true);eq(registry[0].js.includes('off/absolute.js'),false);eq(registry[0].js.includes('on/history.js'),false);eq(registry[0].js.includes('on/clipboard.js'),false);
 eq(listener({type:'save',settings:{}},{id:'test',tab:{id:1}}),undefined);
+// Absolute esconde direito/meio em todos os canais (ponteiro, contextmenu, botão segurado no movimento); esquerdo passa.
+eq(delivered(abs,'pointerdown','button:2'),0);eq(delivered(abs,'pointerup','button:1'),0);eq(delivered(abs,'pointerdown','button:0'),1);
+eq(delivered(abs,'mousemove','button:0,buttons:2'),0);eq(delivered(abs,'pointermove','button:-1,buttons:4'),0);eq(delivered(abs,'mousemove','button:0,buttons:1'),1);eq(delivered(abs,'pointermove','button:-1,buttons:0'),1);
+eq(delivered(make(['context'],['absolute']),'contextmenu'),0);eq(delivered(make(['context']),'contextmenu'),1);eq(delivered(c,'pointerdown','button:2'),1);
 // Ao vivo: "Salvar" empurra opções sem recarregar; a mudança vale para o preventDefault seguinte.
 {const x=make(['clipboard']);const can=()=>run(x,"(()=>{const e=new Event('copy');e.preventDefault();return e.defaultPrevented})()");eq(can(),true);
 run(x,"globalThis.__duck_update__={clipboard:true,bogus:true}");eq(can(),false);
