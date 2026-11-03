@@ -264,6 +264,7 @@ input:focus-visible + .switch {
 /* ── Capture buttons ── */
 .capture-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 5px 16px 8px;
   flex-shrink: 0;
@@ -575,3 +576,30 @@ input[type="color"] {
 .page-state::before { content: "● "; }
 .page-state[data-state="on"]  { color: #48c774; }
 .page-state[data-state="off"] { color: #ffb822; }
+
+/* ── Copiar print para a área de transferência ── */
+.copy-toggle {
+  flex: 1 1 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  position: relative;
+}
+.copy-toggle input[type="checkbox"] {
+  position: absolute;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  opacity: 0;
+}
+.reload-tag {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-left: 6px;
+  white-space: nowrap;
+}

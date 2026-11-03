@@ -71,5 +71,9 @@ stored={};
 await listener({type:'save',settings:{absolute:false,fullscreen:false}},{id:'test'});eq(registry[0].js.includes('off/absolute.js'),true);eq(registry[0].js.includes('off/fullscreen.js'),true);eq(stored.settings.absolute,false);
 await listener({type:'save',settings:Object.fromEntries(Object.keys(bg.DUCK_DEFAULTS).map(k=>[k,false]))},{id:'test'});eq(registry.length,1);eq(registry[0].js.filter(f=>f.startsWith('off/')).length,Object.keys(bg.DUCK_DEFAULTS).length);
 eq(listener({type:'save',settings:{}},{id:'test',tab:{id:1}}),undefined);
+// Ao vivo: "Salvar" empurra opções sem recarregar; a mudança vale para o preventDefault seguinte.
+{const x=make(['clipboard']);const can=()=>run(x,"(()=>{const e=new Event('copy');e.preventDefault();return e.defaultPrevented})()");eq(can(),true);
+run(x,"globalThis.__duck_update__={clipboard:true,bogus:true}");eq(can(),false);
+run(x,"globalThis.__duck_update__={clipboard:false}");eq(can(),true);eq(run(x,"globalThis.__duck_update__"),undefined);}
 console.log(checks+' assertions PASS — Node VM mocks, not browser integration');
 })().catch(e=>{console.error(e);process.exitCode=1});

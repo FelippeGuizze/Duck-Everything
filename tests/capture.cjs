@@ -3,11 +3,11 @@ let active={id:7,windowId:2,active:true,url:'https://example.org/',incognito:fal
 const png='data:image/png;base64,iVBORw0KGgo=';
 const browser={tabs:{get:async()=>active,captureVisibleTab:async(w,o)=>{assert.equal(w,2);assert.equal(o.format,'png');calls++;return png},query:async()=>[active]},downloads:{onChanged:{addListener:f=>changed=f},search:async()=>[{state:'in_progress'}],download:async o=>{saved=o;assert.ok(o.url.startsWith('blob:'));return 42}}};
 const c=vm.createContext({browser,Date,URL,Blob,Uint8Array,atob});vm.runInContext(fs.readFileSync(path.join(__dirname,'../extension/capture.js'),'utf8'),c);
-(async()=>{assert.equal((await c.captureSite(7)).ok,true);assert.equal(saved.saveAs,true);assert.ok(/^DuckEverything-.*\.png$/.test(saved.filename));
+(async()=>{assert.equal((await c.captureSite(7)).ok,true);assert.equal(saved.saveAs,true);assert.ok(/^\d{4}-\d\d-\d\d_[\d-]+\.png$/.test(saved.filename));
 assert.deepEqual(Buffer.from(await (await fetch(saved.url)).arrayBuffer()),Buffer.from('iVBORw0KGgo=','base64'));
 const old=saved.url;changed({id:42,state:{current:'complete'}});await assert.rejects(fetch(old));
 await c.captureSite(7,false);assert.equal(saved.saveAs,false);changed({id:42,state:{current:'complete'}});
-active.incognito=true;await c.captureSite(7);assert.equal(saved.incognito,true);changed({id:42,state:{current:'interrupted'}});
+active.incognito=true;await c.captureSite(7);assert.equal(saved.incognito,undefined);changed({id:42,state:{current:'interrupted'}});
 active.active=false;assert.equal((await c.captureSite(7)).ok,false);assert.equal(calls,3);
 active.active=true;browser.downloads.download=async()=>{throw Error('cancelled')};assert.match((await c.captureSite(7)).error,/cancelado/);
 browser.downloads.download=async()=>{throw Error('Access denied for URL '+png.repeat(10000))};const denied=await c.captureSite(7);assert.ok(denied.error.length<240);assert.ok(!denied.error.includes('base64'));

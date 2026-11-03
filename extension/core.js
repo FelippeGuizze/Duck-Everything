@@ -87,12 +87,26 @@
   const types=['copy','cut','paste','contextmenu','select','selectstart','drag','dragstart','mousedown','mouseup','auxclick','keydown','keyup','keypress'];
   for(const type of types)on(window,type,e=>{if(hidden(e))stop.call(e);});
 
-  if(cfg.selection){
-    const style=document.createElement('style');
-    style.textContent='* { user-select: text !important; -moz-user-select: text !important; -webkit-user-select: text !important; }';
-    const attach=()=>{if(document.documentElement){document.documentElement.appendChild(style);return true;}return false;};
-    if(!attach()) {const observer=new MutationObserver(()=>{if(attach())observer.disconnect();});observer.observe(document,{childList:true,subtree:true});}
-  }
+  // user-select liberado: o <style> entra e sai conforme cfg.selection (pode mudar ao vivo).
+  const selectStyle=document.createElement('style');
+  selectStyle.textContent='* { user-select: text !important; -moz-user-select: text !important; -webkit-user-select: text !important; }';
+  let selectWatch=null;
+  const syncSelectStyle=()=>{
+    if(!cfg.selection){if(selectStyle.parentNode)selectStyle.remove();return;}
+    if(document.documentElement){document.documentElement.appendChild(selectStyle);return;}
+    if(selectWatch)return;
+    selectWatch=new MutationObserver(()=>{if(document.documentElement){selectWatch.disconnect();selectWatch=null;syncSelectStyle();}});
+    selectWatch.observe(document,{childList:true,subtree:true});
+  };
+  syncSelectStyle();
+  // "Salvar" no popup empurra as opções que funcionam ao vivo (clipboard, context, selection,
+  // shortcuts, absolute, keys, locks, alerts). As demais (fullscreen, focus, history, scribd)
+  // instalam seus ganchos no carregamento e só mudam depois de recarregar a aba.
+  define(globalThis,'__duck_update__',{get:()=>undefined,set:update=>{
+    if(!update||typeof update!=='object')return;
+    for(const k of Object.keys(cfg))if(typeof update[k]==='boolean')cfg[k]=update[k];
+    syncSelectStyle();
+  }});
   if(cfg.fullscreen){
     let active=null;
     const notify=target=>queueMicrotask(()=>{
@@ -148,10 +162,15 @@
     method(History.prototype,'forward',function(){return guarded()?undefined:forward.call(this);});
     method(History.prototype,'go',function(delta,...a){return guarded()&&Number(delta)>0?undefined:go.call(this,delta,...a);});
   }
-  if(cfg.locks){
+  {
     const denied=()=>Promise.reject(new DOMException('Permission denied','NotAllowedError'));
-    if(navigator.keyboard?.lock)method(navigator.keyboard,'lock',denied);
-    if(Element.prototype.requestPointerLock)method(Element.prototype,'requestPointerLock',denied);
+    const guard=(obj,key)=>{
+      const native=obj?.[key];
+      if(typeof native==='function')method(obj,key,function(...a){return cfg.locks?denied():native.apply(this,a);});
+    };
+    guard(navigator.keyboard,'lock');
+    guard(Element.prototype,'requestPointerLock');
+    const nativeAlert=window.alert;
+    if(typeof nativeAlert==='function')method(window,'alert',function(...a){return cfg.alerts?undefined:nativeAlert.apply(this,a);});
   }
-  if(cfg.alerts)method(window,'alert',()=>undefined);
 })();

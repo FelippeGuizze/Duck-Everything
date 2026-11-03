@@ -8,7 +8,7 @@ const browser=await firefox.launch();let checks=0;const eq=(a,b)=>{assert.equal(
 try{
 for(const mode of ['off','on','custom']){
 const page=await browser.newPage();
-if(mode!=='off')await page.addInitScript({content:code('seed.js')+(mode==='custom'?code('off/copy.js')+code('off/absolute.js')+code('off/focus.js'):'')+code('core.js')});
+if(mode!=='off')await page.addInitScript({content:code('seed.js')+(mode==='custom'?code('off/clipboard.js')+code('off/absolute.js')+code('off/focus.js'):'')+code('core.js')});
 await page.goto(url+'/lab/');await page.click('#clipboard');
 const log=await page.locator('#log').textContent();eq(log.includes('copy: preventDefault=true'),mode!=='on');eq(log.includes('paste: preventDefault=true'),mode==='off');
 eq(await page.locator('#selection').evaluate(e=>getComputedStyle(e).userSelect),mode==='off'?'none':'text');

@@ -188,3 +188,12 @@ html[data-layout="wide"] .buttons .btn-primary {
 }
 html[data-layout="wide"] .buttons .btn-secondary { flex: 1 1 0; }
 html[data-layout="wide"] .buttons .btn-primary   { flex: 1.2 1 0; }
+
+/* Toggle de copiar o print: embaixo dos dois botões, na mesma coluna */
+html[data-layout="wide"] .capture-actions { flex-wrap: nowrap; }
+html[data-layout="wide"] .copy-toggle {
+  flex: 0 0 auto;
+  padding-top: 2px;
+  line-height: 1.3;
+}
+html[data-layout="wide"] .copy-toggle span { min-width: 0; }

@@ -19,17 +19,28 @@ function captureStamp(d=new Date()){
   const p=n=>String(n).padStart(2,'0');
   return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'_'+p(d.getHours())+'-'+p(d.getMinutes())+'-'+p(d.getSeconds());
 }
-async function captureSite(tabId, saveAs=true) {
+// Tira o print da aba ativa e devolve o data URL PNG.
+async function captureShot(tabId) {
+  if(!Number.isInteger(tabId))throw new Error('Aba inválida.');
+  const tab=await browser.tabs.get(tabId);
+  if(!tab.active)throw new Error('Volte para a aba que deseja capturar.');
+  const png=await browser.tabs.captureVisibleTab(tab.windowId,{format:'png'});
+  const [current]=await browser.tabs.query({active:true,windowId:tab.windowId});
+  if(current?.id!==tab.id || current.url!==tab.url)throw new Error('A aba mudou durante a captura. Tente novamente.');
+  return png;
+}
+// Só o print, sem baixar: o popup copia para a área de transferência antes do "Salvar como".
+async function captureShotReply(tabId) {
+  try {return {ok:true,png:await captureShot(tabId)};}
+  catch(e) {return {ok:false,error:captureError(e)};}
+}
+// `shot`: print já tirado (modo copiar), evita capturar duas vezes.
+async function captureSite(tabId, saveAs=true, shot) {
   if(capturePending)return {ok:false,error:'Já existe uma captura em andamento.'};
   capturePending=true;
   let objectUrl;
   try {
-    if(!Number.isInteger(tabId))throw new Error('Aba inválida.');
-    const tab=await browser.tabs.get(tabId);
-    if(!tab.active)throw new Error('Volte para a aba que deseja capturar.');
-    const png=await browser.tabs.captureVisibleTab(tab.windowId,{format:'png'});
-    const [current]=await browser.tabs.query({active:true,windowId:tab.windowId});
-    if(current?.id!==tab.id || current.url!==tab.url)throw new Error('A aba mudou durante a captura. Tente novamente.');
+    const png=typeof shot==='string'?shot:await captureShot(tabId);
     if(!png.startsWith('data:image/png;base64,'))throw new Error('O navegador não retornou um PNG.');
     const bytes=Uint8Array.from(atob(png.slice(png.indexOf(',')+1)),c=>c.charCodeAt(0));
     // Service worker do Chrome não tem URL.createObjectURL; usa o data URL direto.

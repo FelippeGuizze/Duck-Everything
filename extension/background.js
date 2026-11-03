@@ -11,6 +11,17 @@ async function install(settings) {
   if (existing.length) await browser.scripting.updateContentScripts([spec]);
   else await browser.scripting.registerContentScripts([spec]);
 }
+// Empurra as opções "ao vivo" para as abas já abertas (as demais só valem após recarregar).
+async function pushLive(settings) {
+  try {
+    const update = Object.fromEntries(globalThis.DUCK_LIVE.map(k => [k, settings[k]]));
+    const tabs = (await browser.tabs.query({})).filter(t => Number.isInteger(t.id) && /^(https?|file):/i.test(t.url || ''));
+    await Promise.all(tabs.map(t => browser.scripting.executeScript({
+      target: { tabId: t.id, allFrames: true }, world: 'MAIN',
+      func: u => { globalThis.__duck_update__ = u; }, args: [update]
+    }).catch(() => {})));
+  } catch { /* abas sem acesso: o registro já vale para as próximas páginas */ }
+}
 // copy + paste viraram uma opção só (clipboard): quem tinha qualquer uma ligada continua ligada.
 const migrate = v => (v && typeof v.clipboard !== 'boolean' && (typeof v.copy === 'boolean' || typeof v.paste === 'boolean'))
   ? { ...v, clipboard: (v.copy ?? true) || (v.paste ?? true) } : v;
@@ -19,7 +30,8 @@ async function read() { return normalize(migrate((await browser.storage.local.ge
 serial(async()=>install(await read())).catch(()=>{});
 browser.runtime.onMessage.addListener((message,sender)=>{
   if(sender.id !== browser.runtime.id || sender.tab) return;
-  if(message?.type==='capture') return captureSite(message.tabId, message.saveAs!==false);
+  if(message?.type==='shot') return captureShotReply(message.tabId);
+  if(message?.type==='capture') return captureSite(message.tabId, message.saveAs!==false, message.png);
   if(message?.type==='get') return serial(async()=>{
     const settings=await read(); await install(settings); return {settings};
   });
@@ -29,6 +41,7 @@ browser.runtime.onMessage.addListener((message,sender)=>{
     await install(settings);
     try { await browser.storage.local.set({settings}); }
     catch(e) { await install(old); throw e; }
+    await pushLive(settings);
     return {settings};
   });
 });

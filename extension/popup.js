@@ -118,6 +118,18 @@ function show(s) {
   });
 }
 
+/* Opções ao vivo (DUCK_LIVE) valem na hora para as abas abertas; as outras pedem recarregar. */
+const live = new Set(globalThis.DUCK_LIVE);
+const labelOf = k => document.getElementById(k).closest('label').querySelector('b').textContent;
+keys.filter(k => !live.has(k)).forEach(k => {
+  const tag = document.createElement('span');
+  tag.className = 'reload-tag';
+  tag.textContent = '↻ recarrega a aba';
+  tag.title = 'Esta opção só muda depois de recarregar a aba.';
+  document.getElementById(k).closest('label').querySelector('b').append(tag);
+});
+let saved = {};
+
 /* ── Save ── */
 async function save(reload) {
   busy(true);
@@ -126,11 +138,19 @@ async function save(reload) {
       keys.map(k => [k, document.getElementById(k).checked])
     );
     await sendMessage({ type: 'save', settings });
-    status.textContent = 'Salvo. Recarregue as abas abertas para aplicar.';
+    const pending = keys.filter(k => !live.has(k) && settings[k] !== saved[k]);
+    saved = settings;
     if (reload) {
       const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
       if (tab?.id !== undefined) await browser.tabs.reload(tab.id);
       status.textContent = 'Salvo. Recarregamento solicitado para esta aba.';
+    } else if (pending.length) {
+      status.textContent = 'Salvo e aplicado nas abas abertas, menos: ' + pending.map(labelOf).join(', ') +
+        '. Use "Salvar e recarregar aba" (as outras abas, F5).';
+      busy(false);
+      return;
+    } else {
+      status.textContent = 'Salvo e aplicado nas abas abertas.';
     }
     setTimeout(() => window.close(), 250);
   } catch (e) {
@@ -151,13 +171,36 @@ document.getElementById('disable-all').onclick = () => {
 };
 
 /* ── Capture ── */
+const copyToggle = document.getElementById('capture-copy');
+browser.storage.local.get('capturePrefs').then(r => { copyToggle.checked = !!r.capturePrefs?.copy; }).catch(() => {});
+copyToggle.addEventListener('change', () =>
+  browser.storage.local.set({ capturePrefs: { copy: copyToggle.checked } }).catch(() => {}));
+
+async function copyPng(dataUrl) {
+  const bytes = Uint8Array.from(atob(dataUrl.slice(dataUrl.indexOf(',') + 1)), c => c.charCodeAt(0));
+  await navigator.clipboard.write([new ClipboardItem({ 'image/png': new Blob([bytes], { type: 'image/png' }) })]);
+}
+
 async function takeCapture(saveAs) {
   busy(true);
   try {
     const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
     if (!Number.isInteger(tab?.id)) throw new Error('Nenhuma aba disponível.');
     status.textContent = 'Preparando PNG da área visível…';
-    sendMessage({ type: 'capture', tabId: tab.id, saveAs });
+    let png, copyError;
+    if (copyToggle.checked) {
+      // Copia antes de pedir o arquivo: o "Salvar como" fecha o popup.
+      const shot = await sendMessage({ type: 'shot', tabId: tab.id });
+      if (!shot?.ok) throw new Error(shot?.error || 'Captura não concluída.');
+      png = shot.png;
+      try { await copyPng(png); } catch (e) { copyError = e; }
+    }
+    sendMessage({ type: 'capture', tabId: tab.id, saveAs, png });
+    if (copyError) {
+      status.textContent = 'PNG enviado para salvar, mas não foi possível copiar: ' + errorText(copyError);
+      busy(false);
+      return;
+    }
     setTimeout(() => window.close(), 250);
   } catch (e) {
     status.textContent = 'Captura não concluída: ' + errorText(e);
@@ -172,7 +215,8 @@ document.getElementById('capture-quick').onclick = () => takeCapture(false);
 busy(true);
 sendMessage({ type: 'get' }).then(({ settings }) => {
   show(settings);
-  status.textContent = 'Salve para aplicar nas próximas páginas.';
+  saved = settings;
+  status.textContent = 'Salvar aplica na hora; opções com ↻ pedem recarregar a aba.';
   busy(false);
 }).catch(e => {
   status.textContent = 'Falha ao carregar: ' + errorText(e);
