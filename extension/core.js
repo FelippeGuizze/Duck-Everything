@@ -102,6 +102,9 @@
   // "Salvar" no popup empurra as opções que funcionam ao vivo (clipboard, context, selection,
   // shortcuts, absolute, keys, locks, alerts). As demais (fullscreen, focus, history, scribd)
   // instalam seus ganchos no carregamento e só mudam depois de recarregar a aba.
+  // Valores com que esta página carregou: o popup compara para saber se falta recarregar.
+  const boot={...cfg};
+  define(globalThis,'__duck_boot__',{get:()=>({...boot})});
   define(globalThis,'__duck_update__',{get:()=>undefined,set:update=>{
     if(!update||typeof update!=='object')return;
     for(const k of Object.keys(cfg))if(typeof update[k]==='boolean')cfg[k]=update[k];
