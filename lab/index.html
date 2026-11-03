@@ -253,6 +253,9 @@
       if ((e.ctrlKey || e.metaKey) && key === 'v') e.preventDefault();
       if ((e.ctrlKey || e.metaKey) && key === 'u') e.preventDefault();
       if (e.key === 'F12' || ((e.ctrlKey || e.metaKey) && e.shiftKey && key === 'i')) e.preventDefault();
+      // Anti-DevTools: F12 também pelo jeito antigo (returnValue), e os atalhos Ctrl+Shift+J/K/C/E/M.
+      if (e.key === 'F12') e.returnValue = false;
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && ['KeyJ', 'KeyK', 'KeyC', 'KeyE', 'KeyM'].indexOf(e.code) > -1) e.returnValue = false;
       if (e.key === 'F11') e.preventDefault();
       if (e.key === 'Escape' || e.key === 'Esc') e.preventDefault();
     }, false);
@@ -313,7 +316,7 @@
         } catch (err) {
           console.error(err);
         }
-      }, true);
+      }, false); // na volta (bubble) da janela: o site já rodou os bloqueios e defaultPrevented mostra o resultado final
 
       // 2. MONITORAMENTO DE CLIPBOARD E MOUSE
       ['copy', 'cut', 'paste'].forEach(function(type) {

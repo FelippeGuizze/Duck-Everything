@@ -81,6 +81,15 @@ let checks=0;const eq=(a,b,msg)=>{if(JSON.stringify(a)!==JSON.stringify(b))throw
       await click('#abs-input');await key('z',{text:'z',code:'KeyZ',vk:90});
       eq(await text('#spy-keys'),keysOn?'4':'6',`[${mode}] teclas dentro de campo de texto continuam`);
       eq((await text('#abs-verdict')).startsWith(abs?'✅':'👀'),true,`[${mode}] veredito do lab`);
+      // Anti-DevTools: o lab bloqueia F12 (preventDefault + returnValue) e Ctrl+Shift+J (returnValue). Com a extensão, o bloqueio não pega.
+      if(!abs){
+        await click('#abs-input');
+        await key('F12',{code:'F12',vk:123});await key('J',{code:'KeyJ',vk:74,mod:10});
+        const lines=(await text('#log')).split(/\r?\n/);
+        const last=k=>lines.filter(l=>l.includes('Tecla: "'+k+'"')).pop()||'';
+        eq(last('F12').includes(active?'LIBERADO':'BLOQUEADO'),true,`[${mode}] F12 ${active?'liberado':'bloqueado pelo site'}`);
+        eq(last('J').includes(active?'LIBERADO':'BLOQUEADO'),true,`[${mode}] Ctrl+Shift+J ${active?'liberado':'bloqueado pelo site'}`);
+      }
 
       // ── 3. Voltar: roteador de SPA nunca pode quebrar (bug do GitHub); armadilha só falha com a opção ──
       await click('#btn-test-router');await sleep(350);

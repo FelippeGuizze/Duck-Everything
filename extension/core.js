@@ -49,7 +49,10 @@
   // Campo onde se digita: aqui "keys" não esconde nada, senão ninguém conseguiria escrever.
   const TEXT_FIELD='textarea,[contenteditable]:not([contenteditable="false"]),[role=textbox],input:not([type]),input[type=text],input[type=search],input[type=email],input[type=url],input[type=tel],input[type=password],input[type=number]';
   const typing=t=>{const el=asElement(t);try{return !!(el&&el.closest&&el.closest(TEXT_FIELD));}catch{return false;}};
-  const shortcut=e=>['f5','f11','f12','escape'].includes(keyOf(e))||(mod(e)&&['r','u','i'].includes(keyOf(e)));
+  // Atalhos do DevTools com Shift (Ctrl+Shift+I/J/C/K/E/M) ou Option no Mac (Cmd+Opt+I/J/C): pelo código da tecla,
+  // porque com Option o e.key vira outro caractere.
+  const DEVTOOLS=['KeyI','KeyJ','KeyC','KeyK','KeyE','KeyM'];
+  const shortcut=e=>['f5','f11','f12','escape'].includes(keyOf(e))||(mod(e)&&['r','u','i'].includes(keyOf(e)))||(mod(e)&&(e.shiftKey||e.altKey)&&DEVTOOLS.includes(e.code));
   const keyUnlocked=e=>clipboardKey(e)?cfg.clipboard:cfg.shortcuts&&shortcut(e);
   const keyProtected=e=>clipboardKey(e)||shortcut(e)||['control','meta'].includes(keyOf(e));
 
@@ -88,6 +91,12 @@
     if(uncancelable(this))return;
     return prevent.call(this);
   });
+  // `e.returnValue = false` é o preventDefault antigo e não passa pelo método acima.
+  const returnValue=Object.getOwnPropertyDescriptor(Event.prototype,'returnValue');
+  if(returnValue?.set)define(Event.prototype,'returnValue',{enumerable:returnValue.enumerable,get:returnValue.get,set(v){
+    if(!v&&uncancelable(this))return;
+    return returnValue.set.call(this,v);
+  }});
   const types=[...new Set(['copy','cut','paste','select','selectstart','drag','dragstart','keydown','keyup','keypress',...MOUSE])];
   for(const type of types)on(window,type,e=>{if(hidden(e))stop.call(e);});
 
