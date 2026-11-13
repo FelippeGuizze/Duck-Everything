@@ -55,6 +55,10 @@ const busy = value => buttons.forEach(b => b.disabled = value);
 function sendMessage(msg) {
   return browser.runtime.sendMessage(msg);
 }
+/* A config é por site: o background devolve a chave (hostname sem "www.") da aba atual. */
+const siteHost = browser.tabs.query({ active: true, currentWindow: true })
+  .then(([tab]) => sendMessage({ type: 'site', url: tab?.url || '' }))
+  .then(r => r?.host || null).catch(() => null);
 
 /* ── Show active tab URL in footer with www detection ── */
 browser.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
@@ -159,7 +163,9 @@ async function save(reload) {
     const settings = Object.fromEntries(
       keys.map(k => [k, document.getElementById(k).checked])
     );
-    await sendMessage({ type: 'save', settings });
+    const host = await siteHost;
+    if (!host) throw new Error('esta página não é um site (a config é salva por site).');
+    await sendMessage({ type: 'save', host, settings });
     const pending = keys.filter(k => !live.has(k) && settings[k] !== saved[k]);
     saved = settings;
     updateReloadTags();
@@ -168,12 +174,12 @@ async function save(reload) {
       if (tab?.id !== undefined) await browser.tabs.reload(tab.id);
       status.textContent = 'Salvo. Recarregamento solicitado para esta aba.';
     } else if (pending.length) {
-      status.textContent = 'Salvo e aplicado nas abas abertas, menos: ' + pending.map(labelOf).join(', ') +
-        '. Use "Salvar e recarregar aba" (as outras abas, F5).';
+      status.textContent = 'Salvo e aplicado nas abas abertas deste site, menos: ' + pending.map(labelOf).join(', ') +
+        '. Use "Salvar e recarregar aba" (as outras abas do site, F5).';
       busy(false);
       return;
     } else {
-      status.textContent = 'Salvo e aplicado nas abas abertas.';
+      status.textContent = 'Salvo e aplicado nas abas abertas deste site.';
     }
     setTimeout(() => window.close(), 250);
   } catch (e) {
@@ -236,11 +242,14 @@ document.getElementById('capture-quick').onclick = () => takeCapture(false);
 
 /* ── Load settings ── */
 busy(true);
-sendMessage({ type: 'get' }).then(({ settings }) => {
+siteHost.then(async host => {
+  const { settings } = await sendMessage({ type: 'get', host });
   show(settings);
   saved = settings;
   updateReloadTags();
-  status.textContent = 'Salvar aplica na hora; opções com ↻ pedem recarregar a aba.';
+  status.textContent = host
+    ? 'Config só deste site (' + host + '). Salvar aplica na hora; opções com ↻ pedem recarregar a aba.'
+    : 'Esta página não é um site: a config é salva por site.';
   busy(false);
 }).catch(e => {
   status.textContent = 'Falha ao carregar: ' + errorText(e);

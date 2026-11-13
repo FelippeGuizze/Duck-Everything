@@ -33,7 +33,7 @@ const server=http.createServer((req,res)=>{let f=path.join(root,decodeURICompone
     await ev(chrome,`gBrowser.selectedTab=gBrowser.addTab('moz-extension://${UUID}/popup.html',{triggeringPrincipal:Services.scriptSecurityManager.getSystemPrincipal()});1`);
     let popup;for(let i=0;i<40&&!popup;i++){await sleep(250);popup=(await send('browsingContext.getTree',{})).contexts.find(c=>c.url.startsWith('moz-extension://'))?.context}
     const {context:page}=await send('browsingContext.create',{type:'tab'});
-    const save=s=>ev(popup,`browser.runtime.sendMessage({type:'save',settings:${JSON.stringify(s)}}).then(r=>!!r&&!!r.settings)`);
+    const save=s=>ev(popup,`browser.runtime.sendMessage({type:'save',host:'127.0.0.1',settings:${JSON.stringify(s)}}).then(r=>!!r&&!!r.settings)`);
     // O que um site consegue ver: F12 num campo de texto (Absolute), botão direito por mousedown/pointerdown/movimento (Absolute), tecla comum fora de campo (Esconder teclas).
     const probe=async()=>JSON.parse(await ev(page,`(()=>{const count=(types,fire)=>{let n=0;const h=()=>n++;types.forEach(t=>window.addEventListener(t,h,true));fire();types.forEach(t=>window.removeEventListener(t,h,true));return n};
       let i=document.getElementById('__probe');if(!i){i=document.createElement('input');i.id='__probe';document.body.append(i)}

@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Duck Everything",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Controle global de cópia, seleção, fullscreen e foco com opções independentes.",
+  "incognito": "spanning",
   "permissions": [
     "storage",
     "scripting",

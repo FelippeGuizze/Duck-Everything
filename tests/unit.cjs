@@ -60,18 +60,26 @@ await assert.rejects(run(c,'navigator.keyboard.lock()'),{name:'NotAllowedError'}
 eq(await run(make(['locks']),'navigator.keyboard.lock()'),'native');
 // Registry and persistent settings, using a mocked Firefox API.
 let registry=[],stored={},listener;
-const browser={runtime:{id:'test',onMessage:{addListener:f=>listener=f}},storage:{local:{get:async()=>stored,set:async x=>{stored=x}}},scripting:{getRegisteredContentScripts:async()=>registry,registerContentScripts:async x=>{registry=x},updateContentScripts:async x=>{registry=x},unregisterContentScripts:async()=>{registry=[]}}};
-const bg=vm.createContext({browser});vm.runInContext(code('defaults.js'),bg);vm.runInContext(code('background.js'),bg);
-let res=await listener({type:'get'},{id:'test'});eq(res.settings.absolute,false);eq(res.settings.history,false);eq(res.settings.clipboard,true);eq(res.settings.keys,true);eq(registry[0].world,'MAIN');eq(registry[0].matches[0],'<all_urls>');
+const browser={runtime:{id:'test',onMessage:{addListener:f=>listener=f}},storage:{local:{get:async()=>stored,set:async x=>{stored=x}}},tabs:{query:async()=>[]},scripting:{getRegisteredContentScripts:async()=>registry,registerContentScripts:async x=>{registry.push(...x)},updateContentScripts:async x=>{registry=registry.map(r=>x.find(y=>y.id===r.id)||r)},unregisterContentScripts:async({ids})=>{registry=registry.filter(r=>!ids.includes(r.id))}}};
+const bg=vm.createContext({browser,URL});vm.runInContext(code('defaults.js'),bg);vm.runInContext(code('background.js'),bg);
+const me={id:'test'},reg=id=>registry.find(r=>r.id===id),allOff=Object.fromEntries(Object.keys(bg.DUCK_DEFAULTS).map(k=>[k,false]));
+let res=await listener({type:'get',host:'a.com'},me);eq(res.settings.absolute,false);eq(res.settings.history,false);eq(res.settings.clipboard,true);eq(res.settings.keys,true);eq(registry.length,1);eq(registry[0].world,'MAIN');eq(registry[0].matches[0],'<all_urls>');
+eq((await listener({type:'site',url:'https://www.A.com:8080/x'},me)).host,'a.com');eq((await listener({type:'site',url:'file:///tmp/x.html'},me)).host,'file');eq((await listener({type:'site',url:'about:blank'},me)).host,null);
 // copy + paste viraram clipboard: quem tinha qualquer uma ligada continua ligada
-stored={settings:{copy:false,paste:true}};res=await listener({type:'get'},{id:'test'});eq(res.settings.clipboard,true);
-stored={settings:{copy:false,paste:false}};res=await listener({type:'get'},{id:'test'});eq(res.settings.clipboard,false);
-stored={settings:{copy:false,paste:false,clipboard:true}};res=await listener({type:'get'},{id:'test'});eq(res.settings.clipboard,true);
+stored={sites:{'a.com':{copy:false,paste:true}}};res=await listener({type:'get',host:'a.com'},me);eq(res.settings.clipboard,true);
+stored={sites:{'a.com':{copy:false,paste:false}}};res=await listener({type:'get',host:'a.com'},me);eq(res.settings.clipboard,false);
+stored={sites:{'a.com':{copy:false,paste:false,clipboard:true}}};res=await listener({type:'get',host:'a.com'},me);eq(res.settings.clipboard,true);
 stored={};
-await listener({type:'save',settings:{absolute:false,fullscreen:false}},{id:'test'});eq(registry[0].js.includes('off/absolute.js'),true);eq(registry[0].js.includes('off/fullscreen.js'),true);eq(stored.settings.absolute,false);
-await listener({type:'save',settings:Object.fromEntries(Object.keys(bg.DUCK_DEFAULTS).map(k=>[k,false]))},{id:'test'});eq(registry.length,1);eq(registry[0].js.filter(f=>f.startsWith('off/')).length,Object.keys(bg.DUCK_DEFAULTS).length);
-await listener({type:'save',settings:{absolute:true,keys:false,history:false}},{id:'test'});eq(registry[0].js.includes('on/absolute.js'),true);eq(registry[0].js.includes('off/keys.js'),true);eq(registry[0].js.includes('on/keys.js'),false);eq(bg.DUCK_DEFAULTS.keys,true);eq(registry[0].js.includes('off/absolute.js'),false);eq(registry[0].js.includes('on/history.js'),false);eq(registry[0].js.includes('on/clipboard.js'),false);
-eq(listener({type:'save',settings:{}},{id:'test',tab:{id:1}}),undefined);
+// Config por site: salvar em a.com não muda b.com nem o padrão dos outros sites.
+await listener({type:'save',host:'a.com',settings:{absolute:false,fullscreen:false}},me);eq(reg('duck-site:a.com').js.includes('off/fullscreen.js'),true);eq(reg('duck-site:a.com').matches.join(),'*://a.com/*,*://www.a.com/*');eq(stored.sites['a.com'].fullscreen,false);
+eq(reg('duck-main').js.includes('off/fullscreen.js'),false);eq(reg('duck-main').excludeMatches.includes('*://a.com/*'),true);
+eq((await listener({type:'get',host:'b.com'},me)).settings.fullscreen,true);eq((await listener({type:'get',host:'a.com'},me)).settings.fullscreen,false);
+await listener({type:'save',host:'b.com',settings:allOff},me);eq(registry.length,3);eq(reg('duck-site:b.com').js.filter(f=>f.startsWith('off/')).length,Object.keys(bg.DUCK_DEFAULTS).length);eq(reg('duck-site:a.com').js.includes('off/keys.js'),false);
+await listener({type:'save',host:'a.com',settings:{absolute:true,keys:false,history:false}},me);{const js=reg('duck-site:a.com').js;eq(js.includes('on/absolute.js'),true);eq(js.includes('off/keys.js'),true);eq(js.includes('on/keys.js'),false);eq(bg.DUCK_DEFAULTS.keys,true);eq(js.includes('off/absolute.js'),false);eq(js.includes('on/history.js'),false);eq(js.includes('on/clipboard.js'),false);}
+// Voltar ao padrão remove o script do site.
+await listener({type:'save',host:'a.com',settings:bg.DUCK_DEFAULTS},me);eq(reg('duck-site:a.com'),undefined);eq(stored.sites['a.com'],undefined);eq(registry.length,2);
+await assert.rejects(listener({type:'save',settings:{}},me));checks++;
+eq(listener({type:'save',host:'a.com',settings:{}},{id:'test',tab:{id:1}}),undefined);
 // Absolute esconde direito/meio em todos os canais (ponteiro, contextmenu, botão segurado no movimento); esquerdo passa.
 eq(delivered(abs,'pointerdown','button:2'),0);eq(delivered(abs,'pointerup','button:1'),0);eq(delivered(abs,'pointerdown','button:0'),1);
 eq(delivered(abs,'mousemove','button:0,buttons:2'),0);eq(delivered(abs,'pointermove','button:-1,buttons:4'),0);eq(delivered(abs,'mousemove','button:0,buttons:1'),1);eq(delivered(abs,'pointermove','button:-1,buttons:0'),1);
