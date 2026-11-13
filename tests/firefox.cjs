@@ -17,7 +17,7 @@ await page.click('#blur');eq((await page.locator('#log').textContent()).includes
 await page.close();
 }
 const popup=await browser.newPage({viewport:{width:380,height:570}});
-await popup.addInitScript(()=>{window.browser={runtime:{sendMessage:async m=>({settings:window.DUCK_DEFAULTS})},tabs:{query:async()=>[{id:1}],reload:async()=>{}}};});
+await popup.addInitScript(()=>{window.browser={runtime:{sendMessage:async m=>({settings:window.DUCK_DEFAULTS})},tabs:{query:async()=>[{id:1,url:'https://example.org/'}],reload:async()=>{}}};});
 await popup.goto(url+'/extension/popup.html');await popup.waitForFunction(()=>!document.getElementById('save').disabled);
 eq(await popup.locator('input:checked').count(),12);eq(await popup.evaluate(()=>document.documentElement.scrollHeight<=innerHeight),true);
 eq(await popup.evaluate(()=>document.body.scrollHeight<=innerHeight),true);
