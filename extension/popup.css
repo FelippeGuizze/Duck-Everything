@@ -422,6 +422,11 @@ footer {
    ═══════════════════════════════════════════════════════ */
 #view-settings {
   background: var(--bg-base);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+#view-settings > * {
+  flex-shrink: 0;
 }
 
 .settings-section {
@@ -549,6 +554,16 @@ input[type="color"] {
   color: var(--text-secondary);
   font-family: 'Cascadia Code', 'Fira Code', monospace;
   font-size: 11px;
+}
+a.info-value {
+  color: var(--accent);
+  text-decoration: none;
+}
+a.info-value:hover {
+  text-decoration: underline;
+}
+.settings-section > .setting-info {
+  margin: 6px 0 0;
 }
 
 /* ── Scrollbar ── */
