@@ -16,9 +16,18 @@ Precisa do Firefox 142 ou mais novo.
 
 O Firefox só instala `.xpi` assinado.
 
-1. Crie o zip com o **conteúdo** da pasta `extension/` (o `manifest.json` tem que ficar na raiz do zip, não dentro de uma pasta) e renomeie para `.xpi`.
-2. Envie em <https://addons.mozilla.org/developers/> escolhendo distribuição própria, **não listada** ("On your own" / unlisted). Baixe o `.xpi` assinado.
-3. No Firefox, abra `about:addons`, clique na engrenagem ⚙ e em **Instalar extensão a partir de arquivo…**, e escolha o `.xpi`.
+1. Baixe o `.xpi` mais recente em [Releases](https://github.com/FelippeGuizze/Duck-Everything/releases).
+2. No Firefox, abra `about:addons`, clique na engrenagem ⚙ e em **Instalar extensão a partir de arquivo…**, e escolha o `.xpi`.
+
+A partir da 1.4.2 o Firefox **atualiza sozinho**: o `manifest.json` aponta (`update_url`) para o [`updates.json`](updates.json) deste repositório, que o Firefox consulta de tempos em tempos (ou na hora, em `about:addons` → ⚙ → **Procurar atualizações**). Quem tem a 1.4.1 ou anterior precisa instalar a 1.4.2 à mão uma vez.
+
+### Publicar uma versão nova (mantenedor)
+
+1. Suba o `version` em `extension/manifest.json`.
+2. `python tools/release.py pack` gera `dist/duck-everything-<versão>.zip`.
+3. Envie o zip em <https://addons.mozilla.org/developers/> como distribuição própria, **não listada** ("On your own" / unlisted), e baixe o `.xpi` assinado.
+4. `python tools/release.py publish caminho/do/assinado.xpi` cria a release `v<versão>` no GitHub (precisa do `gh` logado) e acrescenta a versão ao `updates.json`.
+5. Commite o `updates.json` e dê push na `main`. Só a partir daí os Firefox instalados enxergam a versão nova.
 
 ## Instalar no Chrome
 
