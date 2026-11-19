@@ -256,6 +256,9 @@ siteHost.then(async host => {
   busy(false);
 });
 
+/* ── Versão instalada (vem do manifest.json) ── */
+try { document.getElementById('version').textContent = browser.runtime.getManifest().version; } catch {}
+
 /* ═══════════════════════════════════════════════════════
    VIEW NAVIGATION (Main ↔ Settings)
    ═══════════════════════════════════════════════════════ */
