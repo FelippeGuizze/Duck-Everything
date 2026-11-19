@@ -192,7 +192,7 @@ document.getElementById('save').onclick = () => save(false);
 document.getElementById('reload').onclick = () => save(true);
 document.getElementById('reset').onclick = () => {
   show(globalThis.DUCK_DEFAULTS);
-  status.textContent = 'Padrão restaurado. Clique em Salvar para aplicar.';
+  status.textContent = 'Padrões ativados. Clique em Salvar para aplicar neste site.';
 };
 document.getElementById('disable-all').onclick = () => {
   show(Object.fromEntries(keys.map(k => [k, false])));
