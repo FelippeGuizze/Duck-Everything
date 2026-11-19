@@ -1,6 +1,8 @@
 'use strict';
 const defaults = globalThis.DUCK_DEFAULTS;
 const normalize = value => Object.fromEntries(Object.entries(defaults).map(([k,v]) => [k, typeof value?.[k] === 'boolean' ? value[k] : v]));
+// Site sem config salva: tudo desligado. "Ativar padrões" no popup traz DUCK_DEFAULTS para o usuário salvar.
+const OFF = Object.fromEntries(Object.keys(defaults).map(k => [k, false]));
 let queue = Promise.resolve();
 function serial(task) { const next = queue.then(task); queue = next.catch(()=>{}); return next; }
 // Cada site tem a própria config. Chave = hostname sem "www." (ou "file" para arquivos locais).
@@ -16,18 +18,18 @@ function siteKey(url) {
 const validKey = k => k === 'file' || (typeof k === 'string' && siteKey('http://' + k + '/') === k);
 const patterns = k => k === 'file' ? ['file:///*']
   : ['*://' + k + '/*', ...(k.includes('.') && /[a-z]/.test(k) ? ['*://www.' + k + '/*'] : [])];
-const isDefault = s => Object.keys(defaults).every(k => s[k] === defaults[k]);
+const isOff = s => Object.keys(defaults).every(k => !s[k]);
 // seed.js traz os padrões: opção desligada pede off/<k>.js; ligada mas desligada por padrão pede on/<k>.js.
 function files(settings) {
   const keys = Object.keys(defaults);
   return ['seed.js', ...keys.filter(k=>!settings[k]).map(k=>'off/'+k+'.js'), ...keys.filter(k=>settings[k]&&!defaults[k]).map(k=>'on/'+k+'.js'), 'scribd.js', 'core.js'];
 }
-// duck-main cobre os sites sem config própria (padrão); cada site salvo ganha um script só dele.
+// duck-main cobre os sites sem config própria (tudo desligado); cada site salvo ganha um script só dele.
 async function install(sites) {
   const base = {allFrames:true, runAt:'document_start', world:'MAIN', persistAcrossSessions:true};
   const hosts = Object.keys(sites);
   const specs = [
-    {...base, id:'duck-main', matches:['<all_urls>'], excludeMatches: hosts.flatMap(patterns), js: files(defaults)},
+    {...base, id:'duck-main', matches:['<all_urls>'], excludeMatches: hosts.flatMap(patterns), js: files(OFF)},
     ...hosts.map(h => ({...base, id:'duck-site:'+h, matches: patterns(h), js: files(sites[h])}))
   ];
   const existing = new Set((await browser.scripting.getRegisteredContentScripts()).map(s => s.id));
@@ -72,7 +74,7 @@ browser.runtime.onMessage.addListener((message,sender)=>{
   if(message?.type==='site') return Promise.resolve({host: siteKey(message.url || '')});
   if(message?.type==='get') return serial(async()=>{
     const sites=await read(); await install(sites);
-    return {settings: sites[message.host] || normalize()};
+    return {settings: sites[message.host] || {...OFF}};
   });
   if(message?.type==='save') return serial(async()=>{
     const host=message.host;
@@ -80,7 +82,7 @@ browser.runtime.onMessage.addListener((message,sender)=>{
     const settings=normalize(message.settings);
     const old=await read();
     const sites={...old};
-    if(isDefault(settings)) delete sites[host]; else sites[host]=settings;
+    if(isOff(settings)) delete sites[host]; else sites[host]=settings;
     await install(sites);
     try { await browser.storage.local.set({sites}); }
     catch(e) { await install(old); throw e; }

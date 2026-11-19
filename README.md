@@ -26,6 +26,10 @@ O Firefox só instala `.xpi` assinado.
 2. Clique em **Carregar sem compactação** e escolha a pasta `extension/`.
 3. Depois de editar o código, clique no botão de recarregar do card da extensão.
 
+## Configuração por site
+
+Cada site começa com **todas as opções desligadas**. No popup, **Ativar padrões** marca o conjunto padrão de opções; clique em **Salvar** para gravar a config daquele site. Desmarcar tudo e salvar apaga a config do site.
+
 ## Se não bloquear nada
 
 - **Recarregue a aba (F5).** A extensão só age em páginas abertas depois de instalar ou salvar. O rodapé do popup mostra `● ativa nesta aba` ou `● recarregue a aba`.
