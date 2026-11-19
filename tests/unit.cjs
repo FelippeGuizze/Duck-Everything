@@ -43,7 +43,7 @@ eq(elEvent(make(['focus']),'blur',false),1);                                  //
 eq(run(make(),`(()=>{document.focused=true;document.dispatchEvent(new Event('focus'));let n=0;window.addEventListener('focus',()=>n++,true);new Element().dispatchEvent(new Event('focus'));return n})()`),0); // voltando
 // Esconder teclas: some fora de campos de texto, nunca dentro deles.
 const k=make([],['keys']);
-eq(delivered(k,'keydown',"key:'q'"),0);eq(delivered(k,'keydown',"key:'Alt',altKey:true"),0);eq(delivered(c,'keydown',"key:'q'"),1);
+eq(delivered(k,'keydown',"key:'q'"),0);for(const key of ['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'])eq(delivered(k,'keydown',`key:'${key}'`),1);eq(delivered(k,'keydown',"key:'Alt',altKey:true"),0);eq(delivered(c,'keydown',"key:'q'"),1);
 const elKey=(x,field)=>run(x,`(()=>{let n=0;window.addEventListener('keydown',()=>n++,true);const el=new Element();el.field=${field};el.dispatchEvent(new Event('keydown',{key:'q'}));return n})()`);
 eq(elKey(k,true),1);eq(elKey(k,false),0);eq(elKey(c,false),1);
 // Voltar: popstate sempre chega (roteadores precisam dele); só o re-empurrão do histórico some.

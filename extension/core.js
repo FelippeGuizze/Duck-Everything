@@ -48,6 +48,8 @@
   const clipboardKey=e=>mod(e)&&['c','x','v'].includes(keyOf(e));
   // Campo onde se digita: aqui "keys" não esconde nada, senão ninguém conseguiria escrever.
   const TEXT_FIELD='textarea,[contenteditable]:not([contenteditable="false"]),[role=textbox],input:not([type]),input[type=text],input[type=search],input[type=email],input[type=url],input[type=tel],input[type=password],input[type=number]';
+  // Setas nunca são escondidas por "keys": rolagem e navegação continuam funcionando no site.
+  const arrow=e=>['arrowup','arrowdown','arrowleft','arrowright'].includes(keyOf(e));
   const typing=t=>{const el=asElement(t);try{return !!(el&&el.closest&&el.closest(TEXT_FIELD));}catch{return false;}};
   // Atalhos do DevTools com Shift (Ctrl+Shift+I/J/C/K/E/M) ou Option no Mac (Cmd+Opt+I/J/C): pelo código da tecla,
   // porque com Option o e.key vira outro caractere.
@@ -82,7 +84,7 @@
     if(t==='contextmenu')return cfg.context;
     if(t==='select'||t==='selectstart')return cfg.selection;
     if(t==='dragstart'||t==='drag')return cfg.selection&&!draggable(e.target);
-    if(isKey(t))return (cfg.absolute&&keyProtected(e))||(cfg.keys&&!typing(e.target))||(keyUnlocked(e)&&inlineHandler(e));
+    if(isKey(t))return (cfg.absolute&&keyProtected(e))||(cfg.keys&&!typing(e.target)&&!arrow(e))||(keyUnlocked(e)&&inlineHandler(e));
     if(t==='mousedown')return uncancelable(e)&&inlineHandler(e);
     return false;
   };
